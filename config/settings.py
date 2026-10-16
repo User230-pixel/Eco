@@ -21,9 +21,17 @@ def env(key, default=None, required=False):
     return val
 
 
+def env_bool(key, default=False):
+    """FIX 1: устойчивый парсинг boolean из env (true/1/yes/on)."""
+    val = os.getenv(key)
+    if val is None:
+        return default
+    return val.strip().lower() in ("true", "1", "yes", "on")
+
+
 # === Безопасность ===
 SECRET_KEY = env("DJANGO_SECRET_KEY", required=True)
-DEBUG = env("DJANGO_DEBUG", "False").lower() == "true"
+DEBUG = env_bool("DJANGO_DEBUG", default=False)
 
 ALLOWED_HOSTS = [
     h.strip() for h in env("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
@@ -42,7 +50,7 @@ INSTALLED_APPS = [
     "phone_verify",
     "shop.apps.ShopConfig",
     "main.apps.MainConfig",
-    "settings_app.apps.SettingsAppConfig"
+    "settings_app.apps.SettingsAppConfig",
 ]
 
 MIDDLEWARE = [
@@ -83,6 +91,13 @@ POSTGRES_PASSWORD = env("POSTGRES_PASSWORD", required=True)
 POSTGRES_HOST = env("POSTGRES_HOST", "127.0.0.1")
 POSTGRES_PORT = env("POSTGRES_PORT", "5432")
 
+# FIX 2: ATOMIC_REQUESTS убран (был True). Он оборачивал каждый GET в транзакцию,
+# что даёт idle-in-transaction и мешает HTTP-вызовам внутри запроса.
+# Транзакции открываем точечно через transaction.atomic() — они у тебя и так есть.
+#
+# FIX 3: алиас "shop" с другим search_path убран. Это было второе соединение
+# к той же БД, которое нигде не использовалось через .using("shop").
+# Если понадобится — вернём и будем явно указывать .using() во вьюхах.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -94,22 +109,9 @@ DATABASES = {
         "OPTIONS": {
             "options": "-c search_path=public",
         },
-        # FIX: keep-alive соединений + транзакция на запрос
         "CONN_MAX_AGE": 60,
-        "ATOMIC_REQUESTS": True,
-    },
-    "shop": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": POSTGRES_DB,
-        "USER": POSTGRES_USER,
-        "PASSWORD": POSTGRES_PASSWORD,
-        "HOST": POSTGRES_HOST,
-        "PORT": POSTGRES_PORT,
-        "OPTIONS": {
-            "options": "-c search_path=shop,public",
-        },
-        "CONN_MAX_AGE": 60,
-        "ATOMIC_REQUESTS": True,
+        "CONN_HEALTH_CHECKS": True,  # FIX 4: переподключение, если соединение умерло
+        "ATOMIC_REQUESTS": False,
     },
 }
 
@@ -124,7 +126,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # === Локализация ===
-# FIX: русский сайт — русская локаль
 LANGUAGE_CODE = "ru-ru"
 TIME_ZONE = "Europe/Moscow"
 USE_I18N = True
@@ -151,18 +152,18 @@ PROFILE_MODEL = "main.Profile"
 
 
 # === Email ===
+# FIX 5: EMAIL_HOST/PORT/USE_TLS теперь тоже из env — легко сменить провайдера.
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-# FIX: таймаут, иначе воркер висит на медленном SMTP
-EMAIL_TIMEOUT = 10
+EMAIL_HOST = env("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(env("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
+EMAIL_TIMEOUT = int(env("EMAIL_TIMEOUT", "10"))
 
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", required=True)
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", required=True)
 
-# FIX: формат "Имя <email>", а не просто строка
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "AliEco <noreply@example.com>")
+# FIX 6: DEFAULT_FROM_EMAIL теперь обязателен — никаких noreply@example.com в проде.
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", required=True)
 
 
 # === SimpleUI ===
@@ -188,37 +189,43 @@ TRUSTED_PROXY_IPS = [
     ip.strip() for ip in env("TRUSTED_PROXY_IPS", "").split(",") if ip.strip()
 ]
 
-# FIX: SECURE_PROXY_SSL_HEADER имеет смысл только если приложение
-# доступно ИСКЛЮЧИТЕЛЬНО через доверенный прокси. Иначе любой клиент
-# может прислать X-Forwarded-Proto: https и обмануть Django.
-# Оставляем, но требуем, чтобы приложение слушало только localhost.
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# FIX 7: SECURE_PROXY_SSL_HEADER включается только если явно разрешено через env.
+# Иначе любой клиент мог прислать X-Forwarded-Proto: https и обмануть Django.
+if env_bool("USE_PROXY_SSL_HEADER", default=False):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # === Безопасность ===
-# FIX: дефолты завязаны на DEBUG. В проде по умолчанию — включено.
-SECURE_COOKIES = env("SECURE_COOKIES", str(not DEBUG)).lower() == "true"
+SECURE_COOKIES = env_bool("SECURE_COOKIES", default=not DEBUG)
 SESSION_COOKIE_SECURE = SECURE_COOKIES
 CSRF_COOKIE_SECURE = SECURE_COOKIES
 
-SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT", str(not DEBUG)).lower() == "true"
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", default=not DEBUG)
 
-SECURE_HSTS_SECONDS = int(env("SECURE_HSTS_SECONDS", "3600" if not DEBUG else "0"))
+# FIX 8: HSTS по умолчанию — год (31536000), а не час.
+# Для preload нужно минимум 31536000 + include_subdomains.
+SECURE_HSTS_SECONDS = int(
+    env("SECURE_HSTS_SECONDS", "31536000" if not DEBUG else "0")
+)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
 SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
 
 SESSION_COOKIE_HTTPONLY = True
 X_FRAME_OPTIONS = "DENY"
-# FIX: дополнительные заголовки безопасности
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 
 
 # === Кэш ===
-# FIX: в проде Redis обязателен. LocMem ломает все rate-limit'ы.
+# FIX 9: проверка REDIS_URL только для боевого запуска (runserver/gunicorn),
+# чтобы management-команды (collectstatic, migrate) работали без Redis.
 REDIS_URL = env("REDIS_URL", "")
-if not REDIS_URL and not DEBUG:
-    raise RuntimeError("REDIS_URL is required in production")
+IS_RUNTIME = any(
+    arg in os.sys.argv for arg in ("runserver", "gunicorn", "uwsgi")
+)
+
+if not REDIS_URL and not DEBUG and IS_RUNTIME:
+    raise RuntimeError("REDIS_URL is required in production runtime")
 
 if REDIS_URL:
     CACHES = {
@@ -236,7 +243,6 @@ else:
 
 
 # === Логирование ===
-# FIX: вместо print() — logger. Коды подтверждения НЕ логировать.
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
