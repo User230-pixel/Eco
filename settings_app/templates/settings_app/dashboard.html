@@ -1,0 +1,328 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Настройки | AliEco{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-6 py-10">
+
+    <!-- Заголовок -->
+    <h3 class="text-2xl font-black tracking-tight flex items-center gap-3 mb-3 text-gray-900 dark:text-white">
+        <i class="fas fa-cog text-gray-900 dark:text-volt"></i> Настройки
+    </h3>
+    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-8">
+        Управление аккаунтом и предпочтениями.
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-6">
+
+        <!-- ============================ БОКОВАЯ НАВИГАЦИЯ ============================ -->
+        <nav class="space-y-1">
+            <button type="button"
+                    class="settings-tab-btn w-full text-left px-4 py-3 text-sm font-medium border border-transparent flex items-center gap-3
+                           text-gray-700 dark:text-gray-300
+                           hover:border-black dark:hover:border-volt hover:text-black dark:hover:text-volt
+                           data-[active=true]:border-volt
+                           data-[active=true]:font-bold
+                           data-[active=true]:text-black
+                           dark:data-[active=true]:text-volt"
+                    data-tab="profile"
+                    data-active="false">
+                <i class="fas fa-user w-4 text-center"></i>
+                Профиль
+            </button>
+
+            <button type="button"
+                    class="settings-tab-btn w-full text-left px-4 py-3 text-sm font-medium border border-transparent flex items-center gap-3
+                           text-gray-700 dark:text-gray-300
+                           hover:border-black dark:hover:border-volt hover:text-black dark:hover:text-volt
+                           data-[active=true]:border-volt
+                           data-[active=true]:font-bold
+                           data-[active=true]:text-black
+                           dark:data-[active=true]:text-volt"
+                    data-tab="security"
+                    data-active="false">
+                <i class="fas fa-shield-alt w-4 text-center"></i>
+                Безопасность
+            </button>
+
+            <button type="button"
+                    class="settings-tab-btn w-full text-left px-4 py-3 text-sm font-medium border border-transparent flex items-center gap-3
+                           text-gray-700 dark:text-gray-300
+                           hover:border-black dark:hover:border-volt hover:text-black dark:hover:text-volt
+                           data-[active=true]:border-volt
+                           data-[active=true]:font-bold
+                           data-[active=true]:text-black
+                           dark:data-[active=true]:text-volt"
+                    data-tab="notifications"
+                    data-active="false">
+                <i class="fas fa-bell w-4 text-center"></i>
+                Уведомления
+            </button>
+
+            <button type="button"
+                    class="settings-tab-btn w-full text-left px-4 py-3 text-sm font-medium border border-transparent flex items-center gap-3
+                           text-gray-700 dark:text-gray-300
+                           hover:border-black dark:hover:border-volt hover:text-black dark:hover:text-volt
+                           data-[active=true]:border-volt
+                           data-[active=true]:font-bold
+                           data-[active=true]:text-black
+                           dark:data-[active=true]:text-volt"
+                    data-tab="appearance"
+                    data-active="false">
+                <i class="fas fa-palette w-4 text-center"></i>
+                Внешний вид
+            </button>
+
+            <button type="button"
+                    class="settings-tab-btn w-full text-left px-4 py-3 text-sm font-medium border border-transparent flex items-center gap-3
+                           text-gray-700 dark:text-gray-300
+                           hover:border-black dark:hover:border-volt hover:text-black dark:hover:text-volt
+                           data-[active=true]:border-volt
+                           data-[active=true]:font-bold
+                           data-[active=true]:text-black
+                           dark:data-[active=true]:text-volt"
+                    data-tab="danger"
+                    data-active="false">
+                <i class="fas fa-exclamation-triangle w-4 text-center"></i>
+                Опасная зона
+            </button>
+        </nav>
+
+        <!-- ============================ КОНТЕНТ ============================ -->
+        <div>
+
+            <!-- ============================ ВКЛАДКА 1: ПРОФИЛЬ ============================ -->
+            <div class="settings-tab-panel hidden" data-panel="profile">
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6 mb-4">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-user text-gray-900 dark:text-volt"></i> Основное
+                    </h4>
+                    <div>
+                        <label class="block text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">
+                            О себе
+                        </label>
+                        <textarea rows="4" maxlength="500" placeholder="Расскажите о себе...">{{ profile.bio }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================ ВКЛАДКА 2: БЕЗОПАСНОСТЬ ============================ -->
+            <div class="settings-tab-panel hidden" data-panel="security">
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-shield-alt text-gray-900 dark:text-volt"></i> Безопасность
+                    </h4>
+
+                    <div class="space-y-4">
+
+                        <div class="flex items-center justify-between gap-4 pb-5 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Email</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">{{ user.email|default:"—" }}</div>
+                            </div>
+                            <a href="{% url 'settings_app:edit-email' %}"
+                               class="px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                                Сменить
+                            </a>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-5 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Телефон</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">{{ user.phone_number|default:"—" }}</div>
+                            </div>
+                            <a href="{% url 'settings_app:change_phone' %}"
+                               class="px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                                Сменить
+                            </a>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-5 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Пароль</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">Ваш пароль скрыт в целях безопасности</div>
+                            </div>
+                            <a href="{% url 'settings_app:smart_password_reset' %}"
+                               class="px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                                Сменить
+                            </a>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-5 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Активные сессии</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">Управление устройствами</div>
+                            </div>
+                            <button type="button"
+                                    class="px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                                Открыть
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-5 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Выйти с аккаунта с этого устройства</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">Только если вы знаете свои данные, чтобы в критических ситуациях использовать email</div>
+                            </div>
+                            <a href="{% url 'settings_app:logout' %}"
+                               class="px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                                Выйти
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================ ВКЛАДКА 3: УВЕДОМЛЕНИЯ ============================ -->
+            <div class="settings-tab-panel hidden" data-panel="notifications">
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-bell text-gray-900 dark:text-volt"></i> Уведомления
+                    </h4>
+
+                    <div class="space-y-4">
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Новые сообщения в чате</span>
+                        </label>
+
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Новые заказы</span>
+                        </label>
+
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" checked class="w-4 h-4">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Изменение статуса заказа</span>
+                        </label>
+
+                        <label class="flex items-center gap-3 cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4">
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Маркетинговые рассылки</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================ ВКЛАДКА 4: ВНЕШНИЙ ВИД ============================ -->
+            <div class="settings-tab-panel hidden" data-panel="appearance">
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-palette text-gray-900 dark:text-volt"></i> Внешний вид
+                    </h4>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">
+                                Тема
+                            </label>
+                            <select>
+                                <option>Светлая</option>
+                                <option>Тёмная</option>
+                                <option selected>Системная</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">
+                                Язык
+                            </label>
+                            <select>
+                                <option selected>Русский</option>
+                                <option>English</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1">
+                                Часовой пояс
+                            </label>
+                            <select>
+                                <option selected>Europe/Moscow (UTC+3)</option>
+                                <option>Asia/Almaty (UTC+6)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================ ВКЛАДКА 5: ОПАСНАЯ ЗОНА ============================ -->
+            <div class="settings-tab-panel hidden" data-panel="danger">
+                <div class="bg-gray-50 dark:bg-panel border border-red-500/40 p-6">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-red-600 dark:text-red-400">
+                        <i class="fas fa-exclamation-triangle"></i> Опасная зона
+                    </h4>
+
+                    <div class="space-y-4">
+
+                        <div class="flex items-center justify-between gap-4 pb-5 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Скачать данные</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">ZIP со всей информацией</div>
+                            </div>
+                            <button type="button"
+                                    class="px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                                Скачать
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-5 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Выйти со всех устройств</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">Все сессии будут завершены</div>
+                            </div>
+                            <form action="{% url 'settings_app:logout_all' %}" method="post" class="inline">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt bg-transparent visual-link">
+                                    Выйти со всех устройств
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-red-600 dark:text-red-400">Удалить аккаунт</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-1">Безвозвратно</div>
+                            </div>
+                            <form action="{% url 'settings_app:delete_account' %}" method="post" class="inline"
+                                  onsubmit="return confirm('Удалить аккаунт безвозвратно? Это действие необратимо.');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="px-4 py-3 border border-red-500/40 bg-red-500/10 text-sm font-medium text-red-600 dark:text-red-400 hover:border-red-500">
+                                    <i class="fas fa-trash mr-2"></i> Удалить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const tabs = document.querySelectorAll('.settings-tab-btn');
+    const panels = document.querySelectorAll('.settings-tab-panel');
+
+    function activate(tabName) {
+        tabs.forEach(t => {
+            const isActive = t.dataset.tab === tabName;
+            t.dataset.active = isActive ? 'true' : 'false';
+        });
+
+        panels.forEach(p => {
+            p.classList.toggle('hidden', p.dataset.panel !== tabName);
+        });
+    }
+
+    tabs.forEach(t => {
+        t.addEventListener('click', () => activate(t.dataset.tab));
+    });
+
+    activate('profile');
+})();
+</script>
+
+{% endblock %}

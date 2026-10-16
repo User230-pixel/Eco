@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+ENV/
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+*.log
+local_settings.py
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+#Инструкции
+readme.txt
+npm_tailwind.txt
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+# Uploaded product images
+products/
+
+#node
+node_modules/
+dist/
+build/
+.mix/

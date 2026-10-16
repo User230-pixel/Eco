@@ -1,0 +1,9 @@
+<div class="space-y-3">
+    {% for order in orders %}
+        {% include 'main/partials/_driver_order_row.html' with order=order %}
+    {% empty %}
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+            Активных доставок нет.
+        </p>
+    {% endfor %}
+</div>

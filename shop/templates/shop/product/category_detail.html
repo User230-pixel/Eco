@@ -1,0 +1,93 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Главная - Интернет-магазин{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6">
+
+    <!-- Все товары -->
+    <section class="py-10" id="products">
+
+        <form id="catalog-form" class="mb-6 flex flex-wrap items-center gap-3">
+
+            <!-- Поиск -->
+            <div class="relative flex-1 min-w-[250px]">
+                <input type="text"
+                       name="search"
+                       placeholder="Поиск товара..."
+                       hx-get="{{ request.path }}"
+                       hx-trigger="keyup changed delay:300ms"
+                       hx-target="#product-container"
+                       hx-include="#catalog-form"
+                       class="w-full bg-white dark:bg-void border border-gray-300 dark:border-edge px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:border-black dark:focus:border-volt">
+            </div>
+
+            <!-- Бренд -->
+            <div class="flex items-center gap-2">
+                <label for="subcategory" class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Бренд:
+                </label>
+                <select id="subcategory"
+                        name="subcategory"
+                        hx-get="{{ request.path }}"
+                        hx-trigger="change"
+                        hx-target="#product-container"
+                        hx-include="#catalog-form"
+                        class="bg-white dark:bg-void border border-gray-300 dark:border-edge px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-volt">
+                    <option value="">Все бренды</option>
+                    {% for subcat in subcategories %}
+                        <option value="{{ subcat.id }}" {% if subcat.id|slugify == selected_subcat %}selected{% endif %}>
+                            {{ subcat.brand }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <label for="filtered_user_id" class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Продавец:
+                </label>
+                <select id="filtered_user_id"
+                        name="filtered_user_id"
+                        hx-get="{{ request.path }}"
+                        hx-trigger="change"
+                        hx-target="#product-container"
+                        hx-include="#catalog-form"
+                        class="bg-white dark:bg-void border border-gray-300 dark:border-edge px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-volt">
+                    <option value="">Все продавцы</option>
+                    <!-- Заменили filtered_user_id на sellers_list, который прилетает из вьюхи -->
+                    {% for seller in sellers_list %}
+                        <option value="{{ seller.id }}" {% if seller.id|slugify == current_seller_id|slugify %}selected{% endif %}>
+                            {{ seller.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Сортировка -->
+            <div class="flex items-center gap-2">
+                <label for="sort" class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Сортировка:
+                </label>
+                <select id="sort"
+                        name="sort"
+                        hx-get="{{ request.path }}"
+                        hx-trigger="change"
+                        hx-target="#product-container"
+                        hx-include="#catalog-form"
+                        class="bg-white dark:bg-void border border-gray-300 dark:border-edge px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-volt">
+                    <option value="default">По умолчанию</option>
+                    <option value="name_asc">По названию (А-Я)</option>
+                    <option value="price_asc">Сначала дешёвые</option>
+                    <option value="price_desc">Сначала дорогие</option>
+                </select>
+            </div>
+        </form>
+
+        <div id="product-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {% include 'shop/product/table.html' %}
+        </div>
+
+    </section>
+</div>
+{% endblock %}

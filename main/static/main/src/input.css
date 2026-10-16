@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/* ============================================================
+   ИСТОЧНИКИ — где искать классы
+   ============================================================ */
+@source "../../../templates/**/*.html";
+@source "../../../**/templates/**/*.html";
+
+/* ============================================================
+   ВАРИАНТЫ — тёмная тема через класс .dark на <html>
+   ============================================================ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================================================
+   ТЕМА — цвета и шрифты (единый блок @theme)
+   ============================================================ */
+@theme {
+  /* Фоны */
+  --color-void: #0A0A0B;       /* основной тёмный фон */
+  --color-panel: #131316;      /* фон карточек */
+  --color-edge: #1F1F23;       /* границы */
+
+  /* Акцент */
+  --color-volt: #D4FF3F;       /* лаймовый акцент */
+
+  /* Ошибки */
+  --color-error: #F43F5E;
+  --color-error-hover: #E11D48;
+
+  /* Шрифты */
+  --font-sans: Inter, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* ============================================================
+   КАСТОМНЫЙ СКРОЛЛБАР
+   ============================================================ */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-void); }
+::-webkit-scrollbar-thumb { background: var(--color-edge); border-radius: 4px; }
+
+/* ============================================================
+   АВТОСТИЛИЗАЦИЯ ФОРМ
+   Django рендерит <input> без классов — стилизуем их по тегам
+   ============================================================ */
+@layer base {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
+  select,
+  textarea {
+    width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: #111827;
+    font-family: inherit;
+    outline: none;
+    transition: none;
+  }
+
+  input[type="text"]::placeholder,
+  input[type="email"]::placeholder,
+  input[type="password"]::placeholder,
+  input[type="tel"]::placeholder,
+  input[type="number"]::placeholder,
+  input[type="search"]::placeholder,
+  input[type="url"]::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="tel"]:focus,
+  input[type="number"]:focus,
+  input[type="search"]:focus,
+  input[type="url"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #000000;
+  }
+
+  /* Тёмная тема */
+  .dark input[type="text"],
+  .dark input[type="email"],
+  .dark input[type="password"],
+  .dark input[type="tel"],
+  .dark input[type="number"],
+  .dark input[type="search"],
+  .dark input[type="url"],
+  .dark select,
+  .dark textarea {
+    background-color: #0A0A0B;
+    border-color: #1F1F23;
+    color: #ffffff;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #6b7280;
+  }
+
+  .dark input:focus,
+  .dark select:focus,
+  .dark textarea:focus {
+    border-color: #D4FF3F;
+  }
+
+  /* Чекбоксы — акцент лайм */
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: #D4FF3F;
+  }
+}
+
+@layer components {
+  /* DaData Suggestions — тёмная тема */
+  .dark .suggestions-suggestions {
+    background-color: var(--color-void) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--color-edge) !important;
+  }
+  .dark .suggestions-suggestion {
+    color: #e5e7eb !important;
+  }
+  .dark .suggestions-suggestion:hover,
+  .dark .suggestions-suggestion.selected {
+    background-color: var(--color-panel) !important;
+    color: #ffffff !important;
+  }
+  .dark .suggestions-suggestion b,
+  .dark .suggestions-suggestion small {
+    color: #9ca3af !important;
+  }
+  .dark .suggestions-hint,
+  .dark .suggestions-promo {
+    background-color: var(--color-void) !important;
+    color: #9ca3af !important;
+    border-color: var(--color-edge) !important;
+  }
+  .dark .suggestions-promo a,
+  .dark .suggestions-hint a {
+    color: var(--color-volt) !important;
+  }
+  .suggestions-addon,
+  .suggestions-promo {
+    display: none !important;
+  }
+}

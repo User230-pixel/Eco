@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Интернет-магазин{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+
+    <link rel="stylesheet" href="{% static 'main/dist/output.css' %}">
+
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous"></script>
+
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            const html = document.documentElement;
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                html.classList.remove('light');
+            } else {
+                html.classList.remove('dark');
+                html.classList.add('light');
+            }
+        })();
+    </script>
+</head>
+
+<body class="bg-white text-gray-900 dark:bg-void dark:text-white font-sans antialiased"
+      hx-on::config-request="event.detail.headers['X-CSRFToken'] = document.cookie.match(/csrftoken=([^;]+)/)?.[1]">
+
+    {% if not request.COOKIES.cookies_test %}
+    <div id="cookiesNotification" class="fixed bottom-5 left-5 right-5 md:left-auto md:right-5 md:max-w-md z-[9999] bg-white dark:bg-panel border border-gray-300 dark:border-edge p-5 shadow-2xl">
+        <div class="flex items-start gap-4">
+            <i class="fas fa-cookie-bite text-gray-900 dark:text-volt text-2xl mt-1"></i>
+            <div class="flex-1">
+                <p class="text-sm text-gray-700 dark:text-gray-300">
+                    Для работы сайта необходимо включить куки.
+                </p>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <button onclick="enableCookies()" class="px-4 py-2 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                        <i class="fas fa-check"></i> Включить куки
+                    </button>
+                    <button onclick="this.closest('#cookiesNotification').remove()" class="px-4 py-2 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cookiesHelp" class="hidden fixed inset-0 z-[10000] bg-black/60 items-center justify-center">
+        <div class="bg-white dark:bg-panel border border-gray-300 dark:border-edge p-6 max-w-md w-full mx-4">
+            <h4 class="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                <i class="fas fa-cog text-gray-900 dark:text-volt"></i> Как включить куки:
+            </h4>
+            <ul class="mt-4 space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                <li><strong>Chrome/Edge:</strong> Настройки → Конфиденциальность → Куки</li>
+                <li><strong>Firefox:</strong> Настройки → Приватность → Куки</li>
+                <li><strong>Safari:</strong> Настройки → Приватность → Куки</li>
+            </ul>
+            <button onclick="this.closest('#cookiesHelp').classList.replace('flex','hidden')" class="mt-6 w-full py-2.5 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                Понятно
+            </button>
+        </div>
+    </div>
+    {% endif %}
+{% if messages %}
+<div id="authMessagesContainer"
+     class="fixed z-[9999] space-y-3 max-w-md w-[calc(100vw-2.5rem)] md:w-auto"
+     style="top: 20%; right: 1.25rem; transform: translateY(20%);">
+    {% for message in messages %}
+    <div class="auth-message {% if message.tags == 'error' %}auth-error{% else %}auth-success{% endif %} flex items-center gap-3 px-4 py-3 border shadow-2xl backdrop-blur-md
+        {% if message.tags == 'error' %}border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400
+        {% else %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt{% endif %}"
+        data-delay="{{ forloop.counter0 }}">
+        <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+        <div class="flex-1 text-sm font-medium">{{ message }}</div>
+        <button onclick="closeMessage(this)" class="text-gray-500 dark:text-gray-400 hover:text-red-500 shrink-0">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+(function() {
+    const container = document.getElementById('authMessagesContainer');
+    if (!container) return;
+
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let startLeft = 0, startTop = 0;
+
+    function getPoint(e) {
+        if (e.touches && e.touches.length > 0) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+        return { x: e.clientX, y: e.clientY };
+    }
+
+    function resetPosition() {
+        container.style.left = 'auto';
+        container.style.top = '80%';
+        container.style.right = '1.25rem';
+        container.style.transform = 'translateY(-80%)';
+    }
+
+    function onStart(e) {
+        if (e.target.closest('button')) return;
+
+        isDragging = true;
+        const rect = container.getBoundingClientRect();
+        const point = getPoint(e);
+
+        startX = point.x;
+        startY = point.y;
+        startLeft = rect.left;
+        startTop = rect.top;
+
+        container.style.left = rect.left + 'px';
+        container.style.top = rect.top + 'px';
+        container.style.right = 'auto';
+        container.style.transform = 'none';
+
+        e.preventDefault();
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        const point = getPoint(e);
+        const dx = point.x - startX;
+        const dy = point.y - startY;
+
+        let newLeft = startLeft + dx;
+        let newTop = startTop + dy;
+
+        const maxLeft = window.innerWidth - container.offsetWidth;
+        const maxTop = window.innerHeight - container.offsetHeight;
+
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+        container.style.left = newLeft + 'px';
+        container.style.top = newTop + 'px';
+
+        e.preventDefault();
+    }
+
+    function onEnd() {
+        isDragging = false;
+    }
+
+    container.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+
+    container.addEventListener('touchstart', onStart, { passive: false });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+
+    const resetObserver = new MutationObserver(() => {
+        if (container.children.length === 0) {
+            resetPosition();
+            resetObserver.disconnect();
+        }
+    });
+    resetObserver.observe(container, { childList: true });
+
+})();
+</script>
+{% endif %}
+
+    <!-- ============================ HEADER ============================ -->
+    <header class="border-b border-gray-200 dark:border-edge bg-white/95 dark:bg-void/95 backdrop-blur-md sticky top-0 z-50">
+
+
+        <div class="max-w-7xl mx-auto px-6">
+            <nav class="flex items-center justify-between gap-6 py-4">
+
+                <a href="{% url 'main:index' %}" class="flex items-center gap-3 shrink-0">
+                    <div class="w-9 h-9 bg-volt rounded-sm flex items-center justify-center">
+                        <i class="fas fa-store text-black text-lg"></i>
+                    </div>
+                    <span class="text-xl font-black tracking-tighter text-gray-900 dark:text-white">AliEco</span>
+                </a>
+
+                <div class="hidden lg:flex items-center gap-8 text-sm font-medium">
+                    <a href="{% url 'shop:product_list' %}" class="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-volt {% if request.resolver_match.url_name == 'product_list' %}text-black dark:text-volt font-bold{% endif %}">
+                        <i class="fas fa-home mr-1"></i> Главная
+                    </a>
+                    <a href="{% url 'shop:category_list' %}" class="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-volt {% if 'categories' in request.path %}text-black dark:text-volt font-bold{% endif %}">
+                        <i class="fas fa-th-large mr-1"></i> Категории
+                    </a>
+                </div>
+
+                <div class="flex items-center gap-3">
+
+                    <div class="relative hidden md:block">
+                        <input type="text"
+                               name="search"
+                               placeholder="Поиск всего"
+                               id="globalSearchInput"
+                               autocomplete="off"
+                               hx-get="{% url 'shop:global_search_htmx' %}"
+                               hx-trigger="input changed delay:300ms"
+                               hx-target="#searchDropdown"
+                               hx-indicator="#searchSpinner"
+                               hx-include="this"
+                               value="{{ query }}"
+                               class="w-64 bg-transparent border border-gray-300 dark:border-edge px-4 py-2.5 pr-16 text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:border-black dark:focus:border-volt">
+                        <button type="button" id="searchButton" class="absolute right-0 top-0 h-full px-4 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <div id="searchSpinner" class="htmx-indicator hidden absolute right-14 top-1/2 -translate-y-1/2">
+                            <i class="fas fa-spinner fa-spin text-gray-900 dark:text-volt"></i>
+                        </div>
+                        <div id="searchDropdown" class="hidden absolute top-full left-0 right-0 mt-2 z-[9999] bg-white dark:bg-panel border border-gray-300 dark:border-edge shadow-2xl"></div>
+                    </div>
+
+                    {% if request.user.is_authenticated %}
+                        <a href="{% url 'shop:cart_detail' %}" class="relative w-10 h-10 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                            <i class="fas fa-shopping-cart"></i>
+                            {% if request.user.cart.get_total_quantity %}
+                            <span class="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 bg-volt text-black text-[10px] font-bold rounded-full flex items-center justify-center" id="cartCount">
+                                {{ request.user.cart.get_total_quantity|default:0 }}
+                            </span>
+                            {% endif %}
+                        </a>
+
+                        <a href="{% url 'main:notifications' %}" class="relative w-10 h-10 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_notifications_count %}
+                            <span class="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 bg-volt text-black text-[10px] font-bold rounded-full flex items-center justify-center" id="cartCount">
+                                {{ unread_notifications_count|default:0 }}
+                            </span>
+                            {% endif %}
+                        </a>
+                        <a href="{% url 'shop:profile' %}" class="w-10 h-10 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                            <i class="fa-solid fa-circle-user"></i>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'main:get_login_form' %}" class="flex items-center gap-2 px-4 h-10 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                            <i class="fa-solid fa-user"></i>
+                            <span>Вход</span>
+                        </a>
+                    {% endif %}
+
+                    {% if request.user.is_superuser %}
+                        <a href="{% url 'admin:index' %}" class="hidden sm:flex items-center gap-2 px-4 h-10 bg-volt text-black text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                            <i class="fas fa-tools"></i> Админ
+                        </a>
+                    {% endif %}
+
+                    <button id="themeToggle" aria-label="Переключить тему" class="w-10 h-10 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-900 dark:text-white hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ============================ CATEGORIES BAR ============================ -->
+    {% with url_name=request.resolver_match.url_name %}
+        {% if url_name != 'smart_password_reset' and url_name != 'get_login_form' and url_name != 'get_register_form' and url_name != 'profile' and url_name != 'get_verify_form' and url_name != 'verify_code_page' and url_name != 'payment_success' and url_name != 'payment_fail' and url_name != 'notifications' %}
+        <div class="border-b border-gray-200 dark:border-edge bg-gray-50 dark:bg-panel">
+            <div class="max-w-7xl mx-auto px-6 flex items-center gap-2">
+
+                <button onclick="scrollCategoriesBar(-1)" class="shrink-0 w-8 h-8 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-volt">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <div class="flex-1 overflow-x-auto scrollbar-hide" id="categoriesScrollContainer">
+                    <div class="flex items-center gap-2 py-3">
+                        <a href="{% url 'shop:product_list' %}#products" class="shrink-0 px-4 py-2 border border-gray-300 dark:border-edge text-xs font-mono uppercase tracking-widest text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                            Все товары
+                        </a>
+                        {% for category in categories %}
+                        <a href="{{ category.get_absolute_url }}" class="shrink-0 px-4 py-2 border text-xs font-mono uppercase tracking-widest {% if category.slug == request.resolver_match.kwargs.category_slug %}border-volt text-gray-900 dark:text-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt{% endif %}">
+                            {{ category.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button onclick="scrollCategoriesBar(1)" class="shrink-0 w-8 h-8 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-volt">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- ============================ MAIN ============================ -->
+    <main class="min-h-[60vh]">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- ============================ FOOTER ============================ -->
+    <footer class="border-t border-gray-200 dark:border-edge mt-20">
+        <div class="max-w-7xl mx-auto px-6 py-14">
+            <div class="grid md:grid-cols-3 gap-10">
+
+                <div>
+                    <div class="flex items-center gap-3 mb-5">
+                        <div class="w-9 h-9 bg-volt rounded-sm flex items-center justify-center">
+                            <i class="fas fa-store text-black text-lg"></i>
+                        </div>
+                        <span class="text-xl font-black tracking-tighter text-gray-900 dark:text-white">AliEco</span>
+                    </div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-xs">
+                        Лучшие товары по лучшим ценам
+                    </p>
+                    <div class="mt-6 flex gap-2">
+                        <a href="#" class="w-9 h-9 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt"><i class="fab fa-telegram"></i></a>
+                        <a href="#" class="w-9 h-9 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="w-9 h-9 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">Категории</h4>
+                    <ul class="space-y-2.5 text-sm">
+                        {% for category in categories|slice:":5" %}
+                        <li><a href="{{ category.get_absolute_url }}" class="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-volt">{{ category.name }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">Информация</h4>
+                    <ul class="space-y-2.5 text-sm">
+                        <li><a href="#" class="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-volt">О нас</a></li>
+                        <li><a href="#" class="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-volt">Доставка</a></li>
+                        <li><a href="#" class="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-volt">Контакты</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-12 pt-8 border-t border-gray-200 dark:border-edge flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                <span>&copy; 2033 AliEco. Все права защищены.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================ СКРИПТЫ ============================ -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById('categoriesScrollContainer');
+        if (!container) return;
+        const savedScrollLeft = localStorage.getItem('categoriesScrollPosition');
+        if (savedScrollLeft) container.scrollLeft = parseInt(savedScrollLeft, 10);
+        container.addEventListener('scroll', function () {
+            localStorage.setItem('categoriesScrollPosition', container.scrollLeft);
+        });
+    });
+
+    function scrollCategoriesBar(direction) {
+        const container = document.getElementById('categoriesScrollContainer');
+        if (!container) return;
+        container.scrollBy({ left: direction * 250, behavior: 'auto' });
+    }
+
+    document.body.addEventListener('htmx:configRequest', (event) => {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                          document.cookie.match(/csrftoken=([^;]+)/)?.[1];
+        if (csrfToken) event.detail.headers['X-CSRFToken'] = csrfToken;
+    });
+
+    const observer = new MutationObserver(() => {
+        const addon = document.querySelector('.suggestions-addon, .suggestions-promo, [class*="suggestions-addon"]');
+        if (addon) addon.remove();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    const searchInput = document.getElementById('globalSearchInput');
+    const searchDropdown = document.getElementById('searchDropdown');
+
+    if (searchInput && searchDropdown) {
+        searchInput.addEventListener('focus', function() {
+            if (this.value.length >= 2) searchDropdown.classList.remove('hidden');
+        });
+        searchInput.addEventListener('input', function() {
+            if (this.value.length >= 2) searchDropdown.classList.remove('hidden');
+            else searchDropdown.classList.add('hidden');
+        });
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                searchDropdown.classList.add('hidden');
+                this.blur();
+            }
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        const searchBox = e.target.closest('.relative');
+        if (!searchBox) {
+            const dropdown = document.getElementById('searchDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+    });
+
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'searchDropdown') {
+            const dropdown = document.getElementById('searchDropdown');
+            if (dropdown && dropdown.innerHTML.trim() !== '') dropdown.classList.remove('hidden');
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        const results = document.querySelectorAll('#searchDropdown a');
+        const active = document.activeElement;
+        let index = Array.from(results).indexOf(active);
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (index < results.length - 1) results[index + 1].focus();
+            else if (results.length > 0) results[0].focus();
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (index > 0) results[index - 1].focus();
+            else if (results.length > 0) results[results.length - 1].focus();
+        }
+        if (e.key === 'Enter' && active && active.tagName === 'A') {
+            window.location.href = active.href;
+        }
+    });
+
+    document.getElementById('searchButton')?.addEventListener('click', function() {
+        const query = document.getElementById('globalSearchInput').value.trim();
+        if (query) window.location.href = "{% url 'shop:search_results' %}?search=" + encodeURIComponent(query);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const html = document.documentElement;
+
+        if (!toggleBtn || !themeIcon) return;
+
+        let isAnimating = false;
+
+        function applyTheme(theme) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                html.classList.remove('light');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            }
+
+            setTimeout(() => { isAnimating = false; }, 400);
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+
+        toggleBtn.addEventListener('click', function() {
+            if (isAnimating) return;
+            toggleBtn.style.transform = 'scale(0.85)';
+            setTimeout(() => { toggleBtn.style.transform = 'scale(1)'; }, 150);
+            applyTheme(html.classList.contains('dark') ? 'light' : 'dark');
+        });
+
+        toggleBtn.addEventListener('mouseenter', function() { toggleBtn.style.transform = 'scale(1.08)'; });
+        toggleBtn.addEventListener('mouseleave', function() { toggleBtn.style.transform = 'scale(1)'; });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (!link) return;
+            if (link.target === '_blank') return;
+            if (link.getAttribute('href')?.startsWith('#') || link.hash) return;
+            if (link.href.startsWith('mailto:')) return;
+            if (link.href.startsWith('tel:')) return;
+            if (link.href.includes('javascript:')) return;
+            const currentDomain = window.location.hostname;
+            const linkDomain = link.hostname;
+            if (currentDomain !== linkDomain && linkDomain !== '') return;
+            NProgress.start();
+        });
+
+        window.addEventListener('load', function() { NProgress.done(); });
+        window.addEventListener('pageshow', function() { NProgress.done(); });
+
+        document.addEventListener('htmx:beforeRequest', function(event) {
+            NProgress.start();
+            if (event.detail.target) event.detail.target.classList.add('htmx-request');
+        });
+
+        document.addEventListener('htmx:afterRequest', function(event) {
+            NProgress.done();
+            if (event.detail.target) event.detail.target.classList.remove('htmx-request');
+            if (event.detail.xhr && event.detail.xhr.status >= 400) {
+                console.error('HTMX Error:', event.detail.xhr.status);
+            }
+        });
+
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (!form.hasAttribute('hx-post') && !form.hasAttribute('hx-get') &&
+                !form.hasAttribute('hx-put') && !form.hasAttribute('hx-delete') &&
+                !form.hasAttribute('hx-patch')) {
+                NProgress.start();
+            }
+        });
+
+        const originalFetch = window.fetch;
+        window.fetch = function() {
+            NProgress.start();
+            return originalFetch.apply(this, arguments)
+                .then(response => { NProgress.done(); return response; })
+                .catch(error => { NProgress.done(); throw error; });
+        };
+
+        const originalOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function() {
+            this.addEventListener('loadend', function() { NProgress.done(); });
+            this.addEventListener('error', function() { NProgress.done(); });
+            return originalOpen.apply(this, arguments);
+        };
+    });
+    </script>
+
+    <script>
+        setTimeout(() => {
+            document.querySelectorAll('.toast').forEach(el => el.remove());
+        }, 4000);
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Отдельная короткая кука только для проверки, что браузер принимает куки
+        document.cookie = "cookies_check=ok; path=/; max-age=10; SameSite=Lax";
+
+        if (!document.cookie.includes('cookies_check=ok')) {
+            const warning = document.createElement('div');
+            warning.className = 'bg-red-500 text-white px-5 py-2.5 text-center text-sm sticky top-0 z-[9999]';
+            warning.innerHTML = `
+                <i class="fas fa-cookie-bite"></i>
+                Для работы сайта включите куки в настройках браузера.
+                <button onclick="this.parentElement.remove()" class="ml-3 text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            document.body.prepend(warning);
+        }
+    });
+
+    // Функция, которую вызывает кнопка «Включить куки» в плашке
+    function enableCookies() {
+        // Ставим куку согласия на 1 год
+        document.cookie = "cookies_test=ok; path=/; max-age=" + (60 * 60 * 24 * 365) + "; SameSite=Lax";
+
+        // Убираем плашку
+        const notify = document.getElementById('cookiesNotification');
+        if (notify) notify.remove();
+
+        // Убираем окно инструкции, если открыто
+        const help = document.getElementById('cookiesHelp');
+        if (help) help.classList.replace('flex', 'hidden');
+
+        // Перезагружаем, чтобы Django увидел куку и убрал блок из рендера
+        setTimeout(() => window.location.reload(), 300);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const startDismissTimer = (element) => {
+            if (element.dataset.hasTimer === "true") return;
+            element.dataset.hasTimer = "true";
+            element.style.position = "relative";
+
+            const progressBar = document.createElement("div");
+            progressBar.className = 'absolute bottom-0 left-0 h-[3px] w-full bg-gray-400/50';
+            progressBar.style.transition = "width 5s linear";
+            element.appendChild(progressBar);
+
+            requestAnimationFrame(() => { progressBar.style.width = "0%"; });
+
+            element.style.transition = "opacity 0.4s ease, transform 0.4s ease, max-height 0.4s ease, padding 0.4s ease, margin 0.4s ease";
+            element.style.maxHeight = "100px";
+            element.style.overflow = "hidden";
+
+            setTimeout(() => {
+                element.style.opacity = "0";
+                element.style.transform = "translateY(-8px)";
+                element.style.maxHeight = "0";
+                element.style.paddingTop = "0";
+                element.style.paddingBottom = "0";
+                element.style.marginTop = "0";
+                element.style.marginBottom = "0";
+                setTimeout(() => {
+                    const messagesContainer = element.closest(".verify-messages");
+                    element.remove();
+                    if (messagesContainer && messagesContainer.querySelectorAll(".alert, .verify-error").length === 0) {
+                        messagesContainer.remove();
+                    }
+                }, 400);
+            }, 5000);
+        };
+
+        const messageSelector = ".verify-error, .verify-messages .alert, #form-message, .auth-message, .auth-error, .profile-success";
+        document.querySelectorAll(messageSelector).forEach(startDismissTimer);
+
+        const observer = new MutationObserver((mutationsList) => {
+            for (const mutation of mutationsList) {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.matches(messageSelector)) startDismissTimer(node);
+                        node.querySelectorAll(messageSelector).forEach(startDismissTimer);
+                    }
+                });
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    });
+
+    function closeMessage(button) {
+        const message = button.closest('.auth-message');
+        if (!message) return;
+        message.classList.add('opacity-0');
+        setTimeout(() => {
+            message.remove();
+            const container = document.getElementById('authMessagesContainer');
+            if (container && container.children.length === 0) container.remove();
+        }, 400);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.auth-message').forEach((message) => {
+            setTimeout(() => {
+                if (message && message.parentNode) {
+                    message.classList.add('opacity-0');
+                    setTimeout(() => {
+                        if (message.parentNode) {
+                            message.remove();
+                            const container = document.getElementById('authMessagesContainer');
+                            if (container && container.children.length === 0) container.remove();
+                        }
+                    }, 400);
+                }
+            }, 5000);
+        });
+    });
+
+    document.addEventListener('htmx:afterSwap', function(event) {
+        const container = document.getElementById('authMessagesContainer');
+        if (!container) return;
+        container.querySelectorAll('.auth-message:not([data-processed])').forEach((message) => {
+            message.setAttribute('data-processed', 'true');
+            setTimeout(() => {
+                if (message && message.parentNode) {
+                    message.classList.add('opacity-0');
+                    setTimeout(() => {
+                        if (message.parentNode) {
+                            message.remove();
+                            if (container.children.length === 0) container.remove();
+                        }
+                    }, 400);
+                }
+            }, 5000);
+        });
+    });
+    </script>
+
+    <script>
+    const resendBtn = document.getElementById('resendButton');
+    if (resendBtn) {
+        resendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const button = this;
+            button.disabled = true;
+            button.textContent = 'Отправка...';
+            fetch('/resend-password-code/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) showMessage(data.message, 'success');
+                else showMessage(data.message, 'error');
+            })
+            .catch(() => showMessage('Ошибка отправки. Попробуйте позже.', 'error'))
+            .finally(() => {
+                button.disabled = false;
+                button.textContent = 'Отправить код повторно';
+            });
+        });
+    }
+
+    function showMessage(text, type) {
+        const messageDiv = document.getElementById('messageContainer');
+        if (!messageDiv) return;
+        messageDiv.textContent = text;
+        messageDiv.className = `block mt-3 px-4 py-3 text-sm font-medium border ${type === 'success' ? 'border-volt/40 bg-volt/10 text-gray-900 dark:text-volt' : 'border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400'}`;
+        setTimeout(() => { messageDiv.style.display = 'none'; }, 5000);
+    }
+    </script>
+
+</body>
+</html>

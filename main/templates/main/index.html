@@ -1,0 +1,238 @@
+{% extends "main/base.html" %}
+{% load static %}
+
+{% block title %}Главная — AliEco{% endblock title %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6">
+
+    <!-- ============================================================ -->
+    <!-- ГЕРО-СЕКЦИЯ -->
+    <!-- ============================================================ -->
+    <section class="py-20 md:py-28">
+        <div class="max-w-3xl">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="w-2 h-2 bg-volt rounded-full animate-pulse"></span>
+                <span class="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">AliEco · 2033</span>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight text-gray-900 dark:text-white">
+                Добро пожаловать<br>в AliEco
+            </h1>
+            <p class="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-xl">
+                Мы — команда профессионалов, которая создаёт качественные
+                решения для бизнеса и повседневной жизни.
+            </p>
+
+            <div class="mt-10 flex flex-wrap gap-3">
+                <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                    <i class="fas fa-arrow-right"></i> Перейти в магазин
+                </a>
+                <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    <i class="fas fa-arrow-right"></i> Перейти в блог
+                </a>
+                <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    Новости
+                </a>
+                <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    Тех-поддержка
+                </a>
+                <a href="{% url 'main:jobs' %}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    Хочу найти работу
+                </a>
+            </div>
+
+            {% if user.role_user or user.role_driver or user.role_blogger or user.role_shopper or user.role_moderator %}
+            <div class="mt-12 pt-8 border-t border-gray-200 dark:border-edge">
+                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-4">Быстрый доступ</div>
+                <div class="flex flex-wrap gap-3">
+                    {% if user.role_user %}
+                    <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-panel border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        <i class="fas fa-arrow-right"></i> Меню
+                    </a>
+                    {% endif %}
+                    {% if user.role_driver or user.is_superuser %}
+                    <a href="{% url 'main:driver_orders' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-panel border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        <i class="fas fa-arrow-right"></i> Меню водителя
+                    </a>
+                    {% endif %}
+                    {% if user.role_blogger or user.is_superuser %}
+                    <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-panel border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        <i class="fas fa-arrow-right"></i> Меню блогера
+                    </a>
+                    {% endif %}
+                    {% if user.role_shopper or user.is_superuser %}
+                    <a href="{% url 'shop:create_product' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-panel border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        <i class="fas fa-arrow-right"></i> Меню продавца
+                    </a>
+                    {% endif %}
+                    {% if user.role_moderator or user.is_superuser %}
+                    <a href="{% url 'main:users' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-panel border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        <i class="fas fa-arrow-right"></i> Меню модератора
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- БЛОК ВАКАНСИЙ -->
+    <!-- ============================================================ -->
+    <section class="flex items-end justify-between gap-6 py-8 border-t border-gray-200 dark:border-edge">
+        <h2 class="text-3xl md:text-4xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+            <i class="fas fa-briefcase text-gray-900 dark:text-volt"></i> Вакансии
+        </h2>
+        <a href="#vacancies" class="text-sm font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest hover:text-black dark:hover:text-volt">
+            Все вакансии <i class="fas fa-arrow-right"></i>
+        </a>
+    </section>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pb-16" id="vacancies">
+
+        <!-- Вакансия 1 -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-code"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Разработчик Python (Django)</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">IT / Технологии</div>
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">от 120 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Откликнуться
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вакансия 2 -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-pencil-alt"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Дизайнер интерфейсов (UI/UX)</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">Дизайн</div>
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">от 90 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Откликнуться
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вакансия 3 -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-headset"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Специалист техподдержки</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">Поддержка</div>
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">от 50 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Откликнуться
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вакансия 4 -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Менеджер по продажам</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">Продажи</div>
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">от 70 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Откликнуться
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- КОНТАКТЫ И ТЕХПОДДЕРЖКА -->
+    <!-- ============================================================ -->
+    <div class="grid md:grid-cols-2 gap-6 pb-20">
+
+        <!-- КОНТАКТЫ -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+            <h3 class="text-lg font-bold flex items-center gap-2 mb-6 text-gray-900 dark:text-white">
+                <i class="fas fa-address-book text-gray-900 dark:text-volt"></i> Контакты
+            </h3>
+
+            <div class="space-y-4">
+                <div>
+                    <div class="text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                        <i class="fas fa-envelope"></i> Email
+                    </div>
+                    <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">support@AliEco.ru</div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                        <i class="fas fa-phone"></i> Телефон
+                    </div>
+                    <div class="mt-1 text-sm font-medium font-mono text-gray-900 dark:text-white">+7 (999) 123-45-67</div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                        <i class="fas fa-map-marker-alt"></i> Адрес
+                    </div>
+                    <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">г. Москва, ул. Примерная, д. 1</div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <a href="#" class="flex items-center justify-center gap-2 w-full px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                    <i class="fas fa-paper-plane"></i> Написать нам
+                </a>
+            </div>
+        </div>
+
+        <!-- ТЕХПОДДЕРЖКА -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+            <h3 class="text-lg font-bold flex items-center gap-2 mb-6 text-gray-900 dark:text-white">
+                <i class="fas fa-headset text-gray-900 dark:text-volt"></i> Техподдержка
+            </h3>
+
+            <div class="space-y-4">
+                <div>
+                    <div class="text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                        <i class="fas fa-clock"></i> Часы работы
+                    </div>
+                    <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">Пн–Пт: 10:00 – 20:00</div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                        <i class="fas fa-ticket-alt"></i> Чат поддержки
+                    </div>
+                    <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">доступен 24/7</div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                        <i class="fas fa-envelope"></i> Почта техподдержки
+                    </div>
+                    <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">help@AliEco.ru</div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <a href="#" class="flex items-center justify-center gap-2 w-full px-6 py-3 border border-gray-300 dark:border-edge text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    <i class="fas fa-life-ring"></i> Открыть тикет
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock content %}

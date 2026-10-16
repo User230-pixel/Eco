@@ -1,0 +1,103 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Результаты поиска{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <!-- ===== СТАТИСТИКА ===== -->
+    <div class="mb-8 pb-6 border-b border-gray-200 dark:border-edge">
+        <div class="flex items-baseline gap-3 flex-wrap">
+            <span class="text-4xl font-black font-mono text-gray-900 dark:text-white">
+                {{ total_results|default:0 }}
+            </span>
+            <span class="text-sm text-gray-600 dark:text-gray-400">результатов</span>
+            {% if query %}
+                <span class="text-sm font-mono text-gray-500 dark:text-gray-400">по запросу «{{ query }}»</span>
+            {% endif %}
+        </div>
+
+        <div class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+            <span>товаров: <strong class="text-gray-900 dark:text-white">{{ products.paginator.count|default:0 }}</strong></span>
+            {% if categories %}
+                <span>категорий: <strong class="text-gray-900 dark:text-white">{{ categories.count }}</strong></span>
+            {% endif %}
+            {% if subcategories %}
+                <span>подкатегорий: <strong class="text-gray-900 dark:text-white">{{ subcategories.count }}</strong></span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ===== НАЙДЕННЫЕ КАТЕГОРИИ ===== -->
+    {% if categories or subcategories %}
+    <div class="mb-8">
+        <h3 class="text-sm font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+            <i class="fas fa-folder-open"></i> Категории по вашему запросу
+        </h3>
+        <div class="flex flex-wrap gap-2">
+            {% for category in categories %}
+            <a href="{{ category.get_absolute_url }}"
+               class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-edge text-sm text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                <span>📁</span>
+                {{ category.name }}
+                <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-edge text-[10px] font-mono text-gray-600 dark:text-gray-400">
+                    {{ category.product_count|default:0 }}
+                </span>
+            </a>
+            {% endfor %}
+
+            {% for subcat in subcategories %}
+            <a href="{% url 'shop:product_list' %}?subcategory={{ subcat.id }}"
+               class="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-edge text-sm text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                <span>📂</span>
+                {{ subcat.brand|default:subcat.slug }}
+                <span class="px-1.5 py-0.5 bg-gray-100 dark:bg-edge text-[10px] font-mono text-gray-600 dark:text-gray-400">
+                    {{ subcat.category.name }}
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ===== СПИСОК ТОВАРОВ ===== -->
+    {% if products %}
+        <div class="space-y-3">
+            {% include 'shop/search_product_items.html' %}
+        </div>
+    {% else %}
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-12 text-center">
+            <div class="text-6xl mb-4 text-gray-400 dark:text-gray-500">
+                <i class="fas fa-search"></i>
+            </div>
+            <h2 class="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                Ничего не найдено
+            </h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Попробуйте изменить запрос или посмотрите товары в категориях
+            </p>
+
+            {% if all_categories %}
+            <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+                <span class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    Популярные категории:
+                </span>
+                {% for category in all_categories|slice:":5" %}
+                <a href="{{ category.get_absolute_url }}"
+                   class="px-3 py-1 border border-gray-300 dark:border-edge text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    {{ category.name }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <a href="{% url 'shop:product_list' %}"
+               class="inline-flex items-center gap-2 mt-8 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                <i class="fas fa-arrow-left"></i> Вернуться в каталог
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

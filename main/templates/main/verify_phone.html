@@ -1,0 +1,35 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Верификация | Shop{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center px-6 py-10">
+    <div class="w-full max-w-md bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-8">
+
+        <h3 class="text-2xl font-black tracking-tight flex items-center gap-3 mb-3 text-gray-900 dark:text-white">
+            <i class="fas fa-shield-alt text-gray-900 dark:text-volt"></i> Подтверждение аккаунта
+        </h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+            Мы отправили код подтверждения на ваш sms. Введите его ниже.
+        </p>
+
+        {% if messages %}
+        <div class="verify-messages space-y-3 mb-6">
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} flex items-center gap-3 px-4 py-3 border text-sm font-medium
+                    {% if message.tags == 'error' %}border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400
+                    {% elif message.tags == 'success' %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt
+                    {% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300{% endif %}">
+                    <i class="fas fa-{% if message.tags == 'error' %}exclamation-circle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %}"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="verify-form-container">
+            {% include 'main/partials/verify_form_phone.html' %}
+        </div>
+    </div>
+</div>
+{% endblock %}

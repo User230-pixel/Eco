@@ -1,0 +1,246 @@
+{% load static %}
+
+<div class="max-w-4xl mx-auto px-6 py-16">
+
+    <!-- ============================ ШАПКА ПРОФИЛЯ ============================ -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 mb-8 border-b border-gray-200 dark:border-edge">
+        <div class="flex items-center gap-5">
+            <!-- Аватар -->
+            <div class="w-20 h-20 bg-volt rounded-sm flex items-center justify-center text-3xl font-black text-black shrink-0">
+                {{ avatar }}
+            </div>
+
+            <!-- Имя и мета -->
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+                    {{ target.username }}
+                </h1>
+                {% if target.first_name or target.last_name %}
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        {{ target.first_name }} {{ target.last_name }}
+                    </p>
+                {% endif %}
+                <p class="mt-1 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    На сайте с {{ target.date_joined|date:"d.m.Y" }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================ РОЛИ ============================ -->
+    <div class="flex flex-wrap gap-2 mb-8">
+        {% if target.role_admin %}
+            <span class="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400">
+                Администратор
+            </span>
+        {% endif %}
+        {% if target.role_moderator %}
+            <span class="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-volt/40 bg-volt/10 text-gray-900 dark:text-volt">
+                Модератор
+            </span>
+        {% endif %}
+        {% if target.role_driver %}
+            <span class="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400">
+                Водитель
+            </span>
+        {% endif %}
+        {% if target.role_blogger %}
+            <span class="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400">
+                Блогер
+            </span>
+        {% endif %}
+        {% if target.role_user %}
+            <span class="px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400">
+                Потребитель
+            </span>
+        {% endif %}
+    </div>
+
+    <!-- ============================ ДЕЙСТВИЯ ============================ -->
+    <div class="flex flex-wrap gap-3 mb-10">
+
+        <!-- Лайк -->
+        <button type="button"
+                id="likeBtn"
+                class="flex items-center gap-2 px-4 py-3 border text-sm font-bold transition-colors
+                    {% if user_has_liked %}bg-volt text-black border-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}"
+                data-url="{% url 'main:toggle_profile_like' target.pk %}">
+            <i class="fas fa-heart"></i>
+            <span id="likesCount">{{ profile.likes_count }}</span>
+        </button>
+
+        <!-- Подписка -->
+        <button type="button"
+                id="subscribeBtn"
+                class="flex items-center gap-2 px-4 py-3 border text-sm font-bold transition-colors 
+                {% if user_is_subscribed %}bg-volt text-black border-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}"
+                data-url="{% url 'main:toggle_subscription' target.pk %}">
+            <i class="fas fa-user-plus"></i>
+            <span id="subscribersCount">{{ profile.subscribers_count }}</span>
+        </button>
+
+
+
+
+
+        <!-- Написать (заглушка, позже чат) -->
+        <a href="#"
+           class="flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-edge text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+            <i class="fas fa-comment"></i>
+            Написать
+        </a>
+    </div>
+
+    <!-- ============================ БИО ============================ -->
+    {% if profile.bio %}
+    <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6 mb-6">
+        <h3 class="text-lg font-bold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
+            <i class="fas fa-user text-gray-900 dark:text-volt"></i> О себе
+        </h3>
+        <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ profile.bio }}</p>
+    </div>
+    {% endif %}
+
+    <!-- ============================ СТАТИСТИКА ============================ -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-5">
+            <div id="likesCountStat" class="text-3xl font-black text-gray-900 dark:text-white">
+                {{ profile.likes_count }}
+            </div>
+            <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mt-1">
+                Лайков
+            </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-5">
+            <div id="subscribersCountStat" class="text-3xl font-black text-gray-900 dark:text-white">
+                {{ profile.subscribers_count }}
+            </div>
+            <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mt-1">
+                Подписчиков
+            </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-5">
+            <div class="text-3xl font-black text-gray-900 dark:text-white">—</div>
+            <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mt-1">
+                Заказов
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================ КОНТАКТЫ ============================ -->
+    {% if profile.email_public %}
+    <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+        <h3 class="text-lg font-bold flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+            <i class="fas fa-address-card text-gray-900 dark:text-volt"></i> Контакты
+        </h3>
+
+        <div class="contact-item">
+            <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                Электронная почта
+            </div>
+            <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                {{ profile.email_public }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- ============================ JS: ЛАЙК И ПОДПИСКА ============================ -->
+<script>
+(function() {
+    const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+    function setupToggle(btnId, countId, statCountId, activeClasses, inactiveClasses, activeKey) {
+        const btn = document.getElementById(btnId);
+        const countEl = document.getElementById(countId);
+        const statEl = document.getElementById(statCountId);
+        if (!btn || !countEl) return;
+
+        btn.addEventListener('click', async function() {
+            const wasActive = btn.classList.contains(activeClasses[0]);
+            const current = parseInt(countEl.textContent, 10) || 0;
+
+            // Оптимистичное обновление — и кнопка, и статистика
+            if (wasActive) {
+                inactiveClasses.forEach(c => btn.classList.add(c));
+                activeClasses.forEach(c => btn.classList.remove(c));
+                const newVal = Math.max(0, current - 1);
+                countEl.textContent = newVal;
+                if (statEl) statEl.textContent = newVal;
+            } else {
+                activeClasses.forEach(c => btn.classList.add(c));
+                inactiveClasses.forEach(c => btn.classList.remove(c));
+                const newVal = current + 1;
+                countEl.textContent = newVal;
+                if (statEl) statEl.textContent = newVal;
+            }
+
+            try {
+                const res = await fetch(btn.dataset.url, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrf },
+                });
+
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                const data = await res.json();
+
+                let serverCount;
+                if (data.likes_count !== undefined) {
+                    serverCount = data.likes_count;
+                } else if (data.subscribers_count !== undefined) {
+                    serverCount = data.subscribers_count;
+                }
+
+                // Синхронизация с сервером — кнопка + статистика
+                if (serverCount !== undefined) {
+                    countEl.textContent = serverCount;
+                    if (statEl) statEl.textContent = serverCount;
+                }
+
+                const isActive = data[activeKey];
+                if (isActive) {
+                    activeClasses.forEach(c => btn.classList.add(c));
+                    inactiveClasses.forEach(c => btn.classList.remove(c));
+                } else {
+                    inactiveClasses.forEach(c => btn.classList.add(c));
+                    activeClasses.forEach(c => btn.classList.remove(c));
+                }
+            } catch (e) {
+                console.error('toggle error', e);
+                countEl.textContent = current;
+                if (statEl) statEl.textContent = current;
+                if (wasActive) {
+                    activeClasses.forEach(c => btn.classList.add(c));
+                    inactiveClasses.forEach(c => btn.classList.remove(c));
+                } else {
+                    inactiveClasses.forEach(c => btn.classList.add(c));
+                    activeClasses.forEach(c => btn.classList.remove(c));
+                }
+            }
+        });
+    }
+
+    // Настройки для ЛАЙКА
+    setupToggle(
+        'likeBtn',
+        'likesCount',
+        'likesCountStat',
+        ['bg-volt', 'text-black', 'border-volt', 'hover:bg-volt', 'hover:text-black'],
+        ['border-gray-300', 'dark:border-edge', 'text-gray-700', 'dark:text-gray-300', 'hover:border-black', 'hover:text-black', 'dark:hover:bg-volt', 'dark:hover:text-black'],
+        'liked'
+    );
+
+    // Настройки для ПОДПИСКИ
+    setupToggle(
+        'subscribeBtn',
+        'subscribersCount',
+        'subscribersCountStat',
+        ['bg-volt', 'text-black', 'border-volt', 'hover:bg-volt', 'hover:text-black'],
+        ['border-gray-300', 'dark:border-edge', 'text-gray-700', 'dark:text-gray-300', 'hover:border-black', 'hover:text-black', 'dark:hover:bg-volt', 'dark:hover:text-black'],
+        'subscribed'
+    );
+})();
+</script>

@@ -1,0 +1,55 @@
+<!-- ===================== ВЫВОД ОШИБОК ===================== -->
+{% if message %}
+<div class="verify-error mb-4 px-4 py-3 border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium flex items-center gap-2" id="form-message">
+    <i class="fas fa-exclamation-triangle"></i> {{ message }}
+</div>
+{% endif %}
+
+<!-- ===================== ФОРМА ПОДТВЕРЖДЕНИЯ ===================== -->
+<form hx-post="{% url "settings_app:verify_phone_page" %}" hx-target="#verify-form-container"
+      hx-select="#verify-form-container"
+      id="verify-form">
+    {% csrf_token %}
+
+    <div class="mb-5">
+        <label for="{{ verification_form.code.id_for_label }}" class="block text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
+            <i class="fas fa-key"></i> {{ verification_form.code.label }}
+        </label>
+        <div class="profile-input-wrap">
+            {{ verification_form.code }}
+        </div>
+        {% if verification_form.code.errors %}
+        <div class="mt-2 text-xs text-red-600 dark:text-red-400 font-medium flex items-center gap-2">
+            <i class="fas fa-exclamation-circle"></i> {{ verification_form.code.errors.0 }}
+        </div>
+        {% endif %}
+    </div>
+
+    <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+        <i class="fas fa-check"></i> Подтвердить
+    </button>
+</form>
+
+<!-- ===================== КОНТЕЙНЕР ДЛЯ СООБЩЕНИЙ ===================== -->
+<div id="form-message-container"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timerSpan = document.getElementById('timer-seconds');
+    if (!timerSpan) return;
+
+    let minutesLeft = 5;
+
+    const interval = setInterval(() => {
+        minutesLeft--;
+        timerSpan.textContent = minutesLeft;
+
+        if (minutesLeft <= 0) {
+            clearInterval(interval);
+            timerSpan.textContent = '0';
+            const resendBtn = document.getElementById('resend-btn');
+            if (resendBtn) resendBtn.disabled = false;
+        }
+    }, 60000);
+});
+</script>

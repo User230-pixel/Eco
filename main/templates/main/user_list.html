@@ -1,0 +1,200 @@
+<!-- Модальное окно подтверждения -->
+<div id="deleteUserModal"
+     class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+     style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);">
+    <div id="deleteUserBox"
+         class="w-full max-w-md bg-white dark:bg-panel border border-gray-200 dark:border-edge p-6 shadow-2xl transform scale-95 opacity-0 transition-all duration-200">
+        <div class="flex items-start gap-4">
+            <div class="w-10 h-10 shrink-0 flex items-center justify-center border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-black tracking-tight text-gray-900 dark:text-white">
+                    Удалить пользователя?
+                </h3>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    Пользователь <span id="deleteUserName" class="font-bold text-gray-900 dark:text-white"></span>
+                    будет удалён безвозвратно. Связанные данные (профиль, заказы) тоже могут быть удалены каскадом.
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-6 flex items-center justify-end gap-3">
+            <button type="button" id="deleteUserConfirm"
+                    class="px-4 py-2 text-sm font-bold border border-gray-200 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-white">
+                <i class="fas fa-trash-alt mr-1"></i> Удалить
+            </button>
+            <button type="button" id="deleteUserCancel"
+                    class="px-4 py-2 text-sm font-bold border border-gray-200 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-white">
+                Отмена
+            </button>
+        </div>
+    </div>
+</div>
+{% for u in users %}
+    {% if forloop.last and users.has_next %}
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-5 group hover:border-black dark:hover:border-volt"
+             hx-get="{% url 'main:users_list' %}?search={{ search_query }}&page={{ users.next_page_number }}"
+             hx-trigger="revealed"
+             hx-swap="afterend">
+    {% else %}
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-5 group hover:border-black dark:hover:border-volt">
+    {% endif %}
+
+        <!-- Шапка -->
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div class="flex items-center gap-3 flex-wrap">
+                <span class="text-xs font-mono text-gray-500 dark:text-gray-400">
+                    {{ users.start_index|add:forloop.counter0 }}.
+                </span>
+                <a href="{% url 'main:profile' u.pk %}"
+                class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt hover:text-volt dark:hover:text-volt">
+                    {{ u.username }}
+                </a>
+                {% if u.first_name or u.last_name %}
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                        ({{ u.first_name }} {{ u.last_name }})
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Кнопка удаления -->
+            <button type="button"
+                    class="delete-user-btn shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"
+                    data-id="{{ u.pk }}"
+                    data-username="{{ u.username }}"
+                    data-url="{% url 'main:delete_user' u.pk %}"
+                    title="Удалить пользователя">
+                <i class="fas fa-trash-alt pr-6">Del</i>
+            </button>
+        </div>
+
+        
+        <!-- Мета -->
+        <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-mono text-gray-500 dark:text-gray-400">
+            <span>Email: {{ u.email|default:"не указан" }}</span>
+            <span>ID: {{ u.pk }}</span>
+        </div>
+
+        <!-- Роли -->
+        <div class="mt-4 flex flex-wrap gap-2">
+            {% if u.role_admin %}
+                <span class="inline-block px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400">
+                    Администратор
+                </span>
+            {% endif %}
+            {% if u.role_moderator %}
+                <span class="inline-block px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-volt/40 bg-volt/10 text-gray-900 dark:text-volt">
+                    Модератор
+                </span>
+            {% endif %}
+            {% if u.role_driver %}
+                <span class="inline-block px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400">
+                    Водитель
+                </span>
+            {% endif %}
+            {% if u.role_blogger %}
+                <span class="inline-block px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400">
+                    Блогер
+                </span>
+            {% endif %}
+            {% if u.role_user %}
+                <span class="inline-block px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400">
+                    Потребитель
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Футер -->
+        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                Дата регистрации: {{ u.date_joined|date:"d.m.Y"|default:"не указана" }}
+            </span>
+        </div>
+    </div>
+{% endfor %}
+
+<script>
+(function() {
+    const modal = document.getElementById('deleteUserModal');
+    const box = document.getElementById('deleteUserBox');
+    const nameSpan = document.getElementById('deleteUserName');
+    const cancelBtn = document.getElementById('deleteUserCancel');
+    const confirmBtn = document.getElementById('deleteUserConfirm');
+
+    if (!modal) return;
+
+    let pendingId = null;
+
+    function openModal(id, username) {
+        pendingId = id;
+        nameSpan.textContent = username;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        requestAnimationFrame(() => {
+            box.classList.remove('scale-95', 'opacity-0');
+            box.classList.add('scale-100', 'opacity-100');
+        });
+    }
+
+    function closeModal() {
+        box.classList.remove('scale-100', 'opacity-100');
+        box.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 200);
+    }
+
+    // Делегирование — работает и для HTMX-подгруженных карточек
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.delete-user-btn');
+        if (!btn) return;
+        openModal(btn.dataset.id, btn.dataset.username);
+    });
+
+    cancelBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+    });
+
+    confirmBtn.addEventListener('click', function() {
+        if (!pendingId) return;
+
+        const btn = document.querySelector(`.delete-user-btn[data-id="${pendingId}"]`);
+        if (!btn) { closeModal(); return; }
+
+        const url = btn.dataset.url;   // ← берём готовый URL из шаблона
+        const card = btn.closest('.bg-gray-50, .bg-panel, .dark\\:bg-panel');
+        const id = pendingId;
+
+        closeModal();
+        pendingId = null;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '',
+            },
+        })
+        .then(res => {
+            if (res.ok) {
+                if (card) {
+                    card.style.transition = 'opacity 0.3s, transform 0.3s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
+                    setTimeout(() => card.remove(), 300);
+                }
+            } else if (res.status === 403) {
+                alert('Недостаточно прав для удаления.');
+            } else if (res.status === 404) {
+                alert('Пользователь не найден.');
+            } else {
+                alert('Не удалось удалить пользователя. Код: ' + res.status);
+            }
+        })
+        .catch(() => alert('Ошибка сети.'));
+    });
+})();
+</script>

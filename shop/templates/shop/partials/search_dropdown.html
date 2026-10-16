@@ -1,0 +1,102 @@
+{% load static %}
+
+<div id="searchDropdownInner">
+    <div class="bg-white dark:bg-panel">
+
+        {% if query|length < 2 %}
+            <div class="px-5 py-8 text-center">
+                <div class="text-3xl mb-2 text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-search"></i>
+                </div>
+                <span class="text-sm text-gray-500 dark:text-gray-400">Введите минимум 2 символа</span>
+            </div>
+
+        {% elif not results.products and not results.categories and not results.subcategories %}
+            <div class="px-5 py-8 text-center">
+                <div class="text-3xl mb-2 text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-search"></i>
+                </div>
+                <span class="text-sm text-gray-500 dark:text-gray-400">Ничего не найдено по запросу "{{ query }}"</span>
+            </div>
+
+        {% else %}
+
+            <!-- ТОВАРЫ -->
+            {% if results.products %}
+            <div class="border-b border-gray-200 dark:border-edge">
+                <div class="px-5 py-2 text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-void">
+                    Товары
+                </div>
+                {% for product in results.products %}
+                <a href="{% url 'shop:product_detail' product.id product.slug %}"
+                   class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-edge last:border-0 hover:bg-gray-50 dark:hover:bg-void">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy"
+                             class="w-10 h-10 object-cover border border-gray-200 dark:border-edge shrink-0">
+                    {% else %}
+                        <div class="w-10 h-10 bg-gray-100 dark:bg-edge border border-gray-200 dark:border-edge flex items-center justify-center text-lg shrink-0">
+                            📦
+                        </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {{ product.name|truncatechars:40 }}
+                        </div>
+                        <div class="mt-0.5 text-xs font-mono font-bold text-gray-900 dark:text-volt">
+                            {{ product.price }} ₽
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- КАТЕГОРИИ -->
+            {% if results.categories %}
+            <div class="border-b border-gray-200 dark:border-edge">
+                <div class="px-5 py-2 text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-void">
+                    Категории
+                </div>
+                {% for category in results.categories %}
+                <a href="{{ category.get_absolute_url }}"
+                   class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-edge last:border-0 hover:bg-gray-50 dark:hover:bg-void">
+                    <span class="text-lg shrink-0">📁</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ category.name }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- ПОДКАТЕГОРИИ -->
+            {% if results.subcategories %}
+            <div class="border-b border-gray-200 dark:border-edge">
+                <div class="px-5 py-2 text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-void">
+                    Подкатегории
+                </div>
+                {% for subcat in results.subcategories %}
+                <a href="{% url 'shop:product_list' %}?subcategory={{ subcat.id }}"
+                   class="flex items-center gap-3 px-5 py-3 border-b border-gray-100 dark:border-edge last:border-0 hover:bg-gray-50 dark:hover:bg-void">
+                    <span class="text-lg shrink-0">📂</span>
+                    <span class="flex-1 text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {{ subcat.brand|default:subcat.slug }}
+                    </span>
+                    <span class="shrink-0 px-2 py-0.5 border border-gray-300 dark:border-edge text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                        {{ subcat.category.name }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- ВСЕ РЕЗУЛЬТАТЫ -->
+            <div class="px-5 py-3 text-center bg-gray-50 dark:bg-void">
+                <a href="{% url 'shop:search_results' %}?search={{ query }}"
+                   class="text-sm font-medium text-gray-900 dark:text-volt hover:text-black dark:hover:text-white">
+                    Все результаты →
+                </a>
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>

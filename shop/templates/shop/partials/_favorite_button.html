@@ -1,0 +1,7 @@
+<button hx-post="{% url 'shop:toggle_favorite' product.id %}"
+        hx-swap="outerHTML"
+        class="w-10 h-10 flex items-center justify-center border transition-colors
+               {% if is_favorite %}text-red-500 border-red-500/40 bg-red-500/10{% else %}border-gray-300 dark:border-edge text-gray-500 dark:text-gray-400 hover:text-red-500 hover:border-red-500/40{% endif %}"
+        title="{% if is_favorite %}Убрать из избранного{% else %}В избранное{% endif %}">
+    <i class="{% if is_favorite %}fas{% else %}far{% endif %} fa-heart"></i>
+</button>

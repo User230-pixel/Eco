@@ -1,0 +1,39 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Авторизация | Shop{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center px-6 py-10">
+
+    <div class="w-full max-w-md">
+        <div id="auth-card" class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-8">
+
+            <div class="auth-fade-in">
+                <h2 class="text-2xl font-black tracking-tight mb-6 text-gray-900 dark:text-white">
+                    Войти в систему
+                </h2>
+
+                {% include "main/partials/login_form.html" %}
+
+                <p class="mt-6 text-sm text-gray-600 dark:text-gray-400 text-center">
+                    Впервые у нас?
+                    <a href="{% url 'main:get_register_form' %}"
+                       hx-target="#auth-card"
+                       hx-push-url="{% url 'main:get_register_form' %}"
+                       class="font-medium text-gray-900 dark:text-volt hover:text-black dark:hover:text-white">
+                        Создать аккаунт
+                    </a>
+                </p>
+                <p class="mt-3 text-sm text-gray-600 dark:text-gray-400 text-center">
+                    Забыли пароль?
+                    <a href="{% url 'settings_app:smart_password_reset' %}"
+                       class="font-medium text-gray-900 dark:text-volt hover:text-black dark:hover:text-white">
+                        Подтвердить email
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

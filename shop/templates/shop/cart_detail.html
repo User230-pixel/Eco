@@ -1,0 +1,127 @@
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <h2 class="text-3xl md:text-4xl font-black tracking-tighter uppercase flex items-center gap-3 mb-8 text-gray-900 dark:text-white">
+        <i class="fas fa-shopping-cart text-gray-900 dark:text-volt"></i> Ваша корзина
+    </h2>
+
+    {% if cart_items %}
+
+        <!-- Верхняя панель -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 mb-6 border-b border-gray-200 dark:border-edge">
+            <form action="{% url 'shop:clear_cart' %}" method="post">
+                {% csrf_token %}
+                <button type="submit"
+                        onclick="return confirm('Вы уверены, что хотите удалить все товары из корзины?')"
+                        class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-edge text-sm font-medium text-red-600 dark:text-red-400 hover:border-red-500 hover:text-red-700 dark:hover:border-red-500">
+                    <i class="fas fa-trash-alt"></i> Очистить корзину
+                </button>
+            </form>
+
+            <span class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                Всего товаров: {{ total_quantity }}
+            </span>
+        </div>
+
+        <!-- Список -->
+        <div class="space-y-3 mb-8">
+            {% for item in cart_items %}
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-5 flex flex-col md:flex-row md:items-center gap-4">
+
+                <div class="flex-1 min-w-0">
+                    <a href="{% url 'shop:product_detail' id=item.product.id slug=item.product.slug %}"
+                       class="font-bold text-base text-gray-900 dark:text-white hover:text-black dark:hover:text-volt">
+                        {{ item.product.name }}
+                    </a>
+                    <div class="mt-1 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                        Цена: <span class="text-gray-900 dark:text-white">{{ item.product.price }} ₽</span>
+                    </div>
+                </div>
+
+                <!-- Управление количеством -->
+                <div class="flex items-center gap-2">
+                    <form action="{% url 'shop:decrease_cart_item' item.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" title="Убрать 1 товар"
+                                class="w-9 h-9 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </form>
+
+                    <span class="w-12 h-9 flex items-center justify-center border border-gray-300 dark:border-edge text-sm font-bold font-mono text-gray-900 dark:text-white">
+                        {{ item.quantity }}
+                    </span>
+
+                    <form action="{% url 'shop:increase_cart_item' item.id %}" method="post">
+                        {% csrf_token %}
+                        {% if item.quantity < item.product.stock %}
+                        <button type="submit" title="Добавить 1 товар"
+                                class="w-9 h-9 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        {% else %}
+                        <span class="w-9 h-9 flex items-center justify-center border border-gray-300 dark:border-edge text-[10px] font-mono uppercase text-gray-500 dark:text-gray-400">
+                            max
+                        </span>
+                        {% endif %}
+                    </form>
+
+                    <form action="{% url 'shop:remove_from_cart' item.id %}" method="post" class="ml-2">
+                        {% csrf_token %}
+                        <button type="submit"
+                                onclick="return confirm('Удалить товар &quot;{{ item.product.name }}&quot; из корзины?')"
+                                title="Удалить товар полностью"
+                                class="w-9 h-9 border border-gray-300 dark:border-edge flex items-center justify-center text-red-600 dark:text-red-400 hover:border-red-500 hover:text-red-700 dark:hover:border-red-500">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Итого -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="flex items-baseline gap-3">
+                <span class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    Итого к оплате:
+                </span>
+                <span class="text-3xl font-black font-mono text-gray-900 dark:text-white">
+                    {{ cart.get_total_price }} ₽
+                </span>
+            </div>
+
+            <form id="checkout-form" action="{% url 'shop:checkout' %}" method="post"
+                  onsubmit="document.getElementById('checkout-btn').disabled = true; document.getElementById('checkout-btn').innerText = '⏳ Перенаправление в ЮKassa...';">
+                {% csrf_token %}
+                <button type="submit" id="checkout-btn"
+                        class="inline-flex items-center gap-2 px-8 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                    <i class="fas fa-arrow-right"></i> Перейти к оплате
+                </button>
+            </form>
+        </div>
+
+    {% else %}
+
+        <!-- Пустая корзина -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-12 text-center">
+            <div class="text-6xl mb-4 text-gray-400 dark:text-gray-500">
+                <i class="fas fa-shopping-basket"></i>
+            </div>
+            <h3 class="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                Ваша корзина пуста
+            </h3>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Похоже, вы ещё не добавили ни одного товара.
+            </p>
+            <a href="{% url 'shop:product_list' %}"
+               class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                <i class="fas fa-store"></i> Перейти к покупкам
+            </a>
+        </div>
+
+    {% endif %}
+</div>
+{% endblock %}

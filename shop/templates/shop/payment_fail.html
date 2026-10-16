@@ -1,0 +1,28 @@
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center px-6 py-10">
+    <div class="w-full max-w-md bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-8 text-center">
+
+        <div class="text-6xl mb-6 text-red-600 dark:text-red-400">
+            <i class="fas fa-times-circle"></i>
+        </div>
+
+        <h2 class="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+            Оплата не завершена
+        </h2>
+
+        <p class="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            Похоже, вы отменили платёж или возникла техническая ошибка на стороне банка.
+        </p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+            Не беспокойтесь, деньги с вашей карты не списались.
+        </p>
+
+        <a href="{% url 'shop:cart_detail' %}"
+           class="inline-flex items-center justify-center gap-2 w-full mt-10 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+            <i class="fas fa-shopping-cart"></i> Вернуться в корзину
+        </a>
+    </div>
+</div>
+{% endblock %}

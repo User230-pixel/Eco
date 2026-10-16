@@ -1,0 +1,187 @@
+{% extends 'shop/base.html' %}
+{% load static %}
+
+{% block title %}Главная - Интернет-магазин{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6">
+
+    <!-- ============================ HERO ============================ -->
+    <section class="py-20 md:py-28">
+        <div class="max-w-3xl">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="w-2 h-2 bg-volt rounded-full animate-pulse"></span>
+                <span class="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">AliEco · 2033</span>
+            </div>
+
+            <h1 class="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight text-gray-900 dark:text-white">
+                Добро пожаловать<br>в AliEco
+            </h1>
+
+            {% if request.user.is_authenticated %}
+                <p class="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-xl">
+                    Лучшие товары по доступным ценам.
+                </p>
+                <div class="mt-10">
+                    <a href="#products" class="inline-flex items-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                        <i class="fas fa-arrow-right"></i> Начать покупки
+                    </a>
+                </div>
+            {% else %}
+                <p class="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-xl">
+                    Лучшие товары по доступным ценам.
+                </p>
+                <p class="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-xl">
+                    Вы пока можете рассматривать цены, но пока не можете покупать товары по причине отсутствия аккаунта.
+                </p>
+                <div class="mt-6 flex flex-wrap items-center gap-3 text-sm">
+                    <a href="{% url 'main:get_login_form' %}" class="font-medium text-gray-900 dark:text-volt hover:text-black dark:hover:text-white">Войти</a>
+                    <span class="text-gray-500 dark:text-gray-400">или</span>
+                    <a href="{% url 'main:get_register_form' %}" class="font-medium text-gray-900 dark:text-volt hover:text-black dark:hover:text-white">Зарегистрироваться</a>
+                </div>
+                <div class="mt-10">
+                    <a href="#products" class="inline-flex items-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                        <i class="fas fa-arrow-right"></i> Рассмотреть товары
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- ============================ РЕКОМЕНДУЕМЫЕ ============================ -->
+    <section class="py-10 border-t border-gray-200 dark:border-edge">
+        <div class="flex items-end justify-between gap-6 mb-8">
+            <h2 class="text-3xl md:text-4xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+                <i class="fas fa-star text-gray-900 dark:text-volt"></i> Рекомендуемые товары
+            </h2>
+            <a href="#products" class="text-sm font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest hover:text-black dark:hover:text-volt">
+                Смотреть все →
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {% for product in related_products %}
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+                <div class="relative aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center overflow-hidden">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="text-5xl text-gray-400 dark:text-gray-500"><i class="fas fa-image"></i></div>
+                    {% endif %}
+                    <div class="absolute top-3 left-3 px-2 py-1 bg-volt text-black text-[10px] font-mono font-bold uppercase tracking-widest">
+                        Рекомендуем
+                    </div>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt leading-snug">
+                        {{ product.name }}
+                    </h3>
+                    <p class="mt-1 text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                        {{ product.category2nd.brand }}
+                    </p>
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex items-center justify-between">
+                        <span class="text-xl font-black font-mono text-gray-900 dark:text-white">{{ product.price }} ₽</span>
+                        <a href="{{ product.get_absolute_url }}"
+                           class="w-9 h-9 bg-volt text-black flex items-center justify-center hover:bg-black hover:text-volt dark:hover:bg-white dark:hover:text-black">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full py-16 text-center">
+                <div class="text-5xl mb-4 text-gray-400 dark:text-gray-500"><i class="fas fa-box-open"></i></div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Нет рекомендуемых товаров</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- ============================ ВСЕ ТОВАРЫ ============================ -->
+    <section class="py-10 border-t border-gray-200 dark:border-edge" id="products" name="products">
+
+        <h2 class="text-3xl md:text-4xl font-black tracking-tighter uppercase flex items-center gap-3 mb-8 text-gray-900 dark:text-white">
+            <i class="fas fa-box text-gray-900 dark:text-volt"></i> Все товары
+        </h2>
+
+        <form id="catalog-form" class="mb-6 flex flex-wrap items-center gap-3">
+
+            <div class="relative flex-1 min-w-[250px]">
+                <input type="text"
+                       name="search"
+                       placeholder="Поиск товаров..."
+                       hx-get="{% url 'shop:product_list' %}"
+                       hx-trigger="keyup changed delay:300ms"
+                       hx-target="#product-container"
+                       hx-include="#catalog-form"
+                       class="w-full bg-white dark:bg-void border border-gray-300 dark:border-edge px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 focus:outline-none focus:border-black dark:focus:border-volt">
+            </div>
+
+            <div class="flex items-center gap-2">
+                <label for="subcategory" class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Бренд:
+                </label>
+                <select id="subcategory"
+                        name="subcategory"
+                        hx-get="{% url 'shop:product_list' %}"
+                        hx-trigger="change"
+                        hx-target="#product-container"
+                        hx-include="#catalog-form"
+                        class="bg-white dark:bg-void border border-gray-300 dark:border-edge px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-volt">
+                    <option value="">Все бренды</option>
+                    {% for subcat in subcategories %}
+                        <option value="{{ subcat.id }}" {% if subcat.id|slugify == selected_subcat %}selected{% endif %}>
+                            {{ subcat.brand }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <label for="filtered_user_id" class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Продавец:
+                </label>
+                <select id="filtered_user_id"
+                        name="filtered_user_id"
+                        hx-get="{% url 'shop:product_list' %}"
+                        hx-trigger="change"
+                        hx-target="#product-container"
+                        hx-include="#catalog-form"
+                        class="bg-white dark:bg-void border border-gray-300 dark:border-edge px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-volt">
+                    <option value="">Все продавцы</option>
+                    <!-- Заменили filtered_user_id на sellers_list, который прилетает из вьюхи -->
+                    {% for seller in sellers_list %}
+                        <option value="{{ seller.id }}" {% if seller.id|slugify == current_seller_id|slugify %}selected{% endif %}>
+                            {{ seller.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+
+
+            <div class="flex items-center gap-2">
+                <label for="sort" class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                    Сортировка:
+                </label>
+                <select id="sort"
+                        name="sort"
+                        hx-get="{% url 'shop:product_list' %}"
+                        hx-trigger="change"
+                        hx-target="#product-container"
+                        hx-include="#catalog-form"
+                        class="bg-white dark:bg-void border border-gray-300 dark:border-edge px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-volt">
+                    <option value="default">По умолчанию</option>
+                    <option value="name_asc">По названию (А-Я)</option>
+                    <option value="price_asc">Сначала дешёвые</option>
+                    <option value="price_desc">Сначала дорогие</option>
+                </select>
+            </div>
+        </form>
+
+        <div id="product-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {% include 'shop/product/table.html' %}
+        </div>
+
+    </section>
+</div>
+{% endblock %}

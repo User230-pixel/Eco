@@ -1,0 +1,115 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Все вакансии{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6">
+
+    <section class="flex items-end justify-between gap-6 py-8 border-b border-gray-200 dark:border-edge">
+        <h2 class="text-3xl md:text-4xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+            <i class="fas fa-briefcase text-gray-900 dark:text-volt"></i> Вакансии
+        </h2>
+    </section>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 py-10">
+
+        <!-- Водитель -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-truck"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Водитель</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">Транспорт</div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-edge border border-gray-200 dark:border-edge text-[10px] font-mono uppercase tracking-widest text-gray-600 dark:text-gray-400">
+                        Со склада в ПВЗ
+                    </span>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">60 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Устроиться
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Блогер -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-video"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Блогер</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">Медиа</div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-edge border border-gray-200 dark:border-edge text-[10px] font-mono uppercase tracking-widest text-gray-600 dark:text-gray-400">
+                        Возможность выкладывать блоги
+                    </span>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">от 25 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Устроиться
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Продавец -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Продавец</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">Техника</div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-edge border border-gray-200 dark:border-edge text-[10px] font-mono uppercase tracking-widest text-gray-600 dark:text-gray-400">
+                        Полноценный бизнес интернет-магазин
+                    </span>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">от 30 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Устроиться
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модератор -->
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+            <div class="aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center text-5xl text-gray-900 dark:text-volt">
+                <i class="fas fa-user-shield"></i>
+            </div>
+            <div class="p-5">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">Модератор</h3>
+                <div class="mt-1 text-[10px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">Другое</div>
+
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <span class="inline-flex items-center px-2.5 py-1 bg-gray-100 dark:bg-edge border border-gray-200 dark:border-edge text-[10px] font-mono uppercase tracking-widest text-gray-600 dark:text-gray-400">
+                        Имеете власть, но и ответственность
+                    </span>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex flex-col gap-3">
+                    <span class="text-xl font-black font-mono text-gray-900 dark:text-white">от 100 000 ₽</span>
+                    <a href="#" class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        Перейти
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Регистрация | Shop{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center px-6 py-10">
+    <div class="w-full max-w-md">
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-8">
+
+            <div class="auth-fade-in">
+                <h2 class="text-2xl font-black tracking-tight mb-6 text-gray-900 dark:text-white">
+                    Регистрация
+                </h2>
+
+                {% include "main/partials/register_form.html" %}
+
+                <p class="mt-6 text-sm text-gray-600 dark:text-gray-400 text-center">
+                    Уже есть аккаунт?
+                    <a href="{% url 'main:get_login_form' %}"
+                       class="font-medium text-gray-900 dark:text-volt hover:text-black dark:hover:text-white">
+                        Войти в аккаунт
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

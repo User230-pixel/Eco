@@ -1,0 +1,241 @@
+{% load static %}
+
+<!-- ФОРМА -->
+<form id="profile-main-form"
+      hx-post="{% url 'shop:profile_update' %}"
+      hx-target="#profile-form-container"
+      hx-swap="innerHTML"
+      enctype="multipart/form-data"
+      hx-trigger="submit">
+    {% csrf_token %}
+
+    <!-- ТОПБАР -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 mb-8 border-b border-gray-200 dark:border-edge">
+        <div class="flex items-center gap-5">
+            <div class="w-20 h-20 bg-volt rounded-sm flex items-center justify-center text-3xl font-black text-black">
+                {{ avatar }}
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+                    Привет, {{ user.first_name|default:user.username }}!
+                </h1>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Добро пожаловать в личный кабинет
+                </p>
+            </div>
+        </div>
+
+        <button type="submit"
+                class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black shrink-0"
+                form="profile-main-form">
+            <i class="fas fa-save"></i> Сохранить изменения
+        </button>
+    </div>
+
+    <!-- Успех -->
+    {% if success %}
+    <div class="profile-success flex items-center gap-3 px-4 py-3 mb-4 border border-volt/40 bg-volt/10 text-gray-900 dark:text-volt text-sm font-medium">
+        <i class="fas fa-check-circle"></i> Изменения успешно сохранены!
+    </div>
+    {% endif %}
+
+    <!-- Ошибки -->
+    {% if form_errors %}
+    <div class="profile-message error flex items-start gap-3 px-4 py-3 mb-4 border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 text-sm">
+        <i class="fas fa-exclamation-circle mt-0.5"></i>
+        <div>
+            <strong>Пожалуйста, исправьте ошибки:</strong>
+            <ul class="mt-1 pl-5 list-disc text-[13px]">
+                {% for error in form_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid lg:grid-cols-2 gap-6">
+
+        <!-- ЛЕВАЯ КОЛОНКА -->
+        <div class="space-y-6">
+
+            <!-- Адрес -->
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                <h3 class="text-lg font-bold flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                    <i class="fas fa-map-pin text-gray-900 dark:text-volt"></i> Выберите адрес доставки
+                </h3>
+
+                <div class="relative">
+                    <label for="address" class="block text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
+                        Адрес доставки
+                    </label>
+                    <input type="text"
+                           id="address"
+                           name="address"
+                           value="{{ profile.address }}"
+                           placeholder="Начните вводить адрес..."
+                           autocomplete="off"
+                           class="profile-input w-full bg-white dark:bg-void border border-gray-300 dark:border-edge px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-black dark:focus:border-volt {% if profile_form.address.errors %}border-red-500 dark:border-red-500{% endif %}">
+
+                    {% if profile_form.address.errors %}
+                    <div class="field-error mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
+                        <i class="fas fa-exclamation-circle"></i> {{ profile_form.address.errors.0 }}
+                    </div>
+                    {% endif %}
+
+                    <div id="address-status" class="mt-1 text-xs text-gray-500 dark:text-gray-400"></div>
+                </div>
+            </div>
+
+            <!-- Контакты -->
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                <h3 class="text-lg font-bold flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                    <i class="fas fa-address-card text-gray-900 dark:text-volt"></i> Контакты
+                </h3>
+
+                <div class="contact-item mt-3" id="email-container">
+                    <div class="contact-info">
+                        <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                            Электронная почта
+                        </div>
+                        <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+                            {{ user.email|default:'Не указана' }}
+                        </div>
+
+                        {% if email_form.email.errors %}
+                        <div class="field-error mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
+                            <i class="fas fa-exclamation-circle"></i> {{ email_form.email.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div id="email-form-wrapper" class="mt-3"></div>
+
+                <div class="contact-item mt-5 pt-5 border-t border-gray-200 dark:border-edge" id="phone-container">
+                    <div class="contact-info">
+                        <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                            Номер телефона
+                        </div>
+                        <div class="mt-1 text-sm font-medium font-mono text-gray-900 dark:text-white">
+                            {{ profile.phone|default:user.phone_number|default:'Не указан' }}
+                        </div>
+                        {% if phone_form.phone_number.errors %}
+                        <div class="field-error mt-2 text-xs text-red-600 dark:text-red-400 flex items-center gap-2">
+                            <i class="fas fa-exclamation-circle"></i> {{ phone_form.phone_number.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div id="phone-form-wrapper" class="mt-3"></div>
+            </div>
+            <!-- Аккаунт -->
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                <div class="space-y-3">
+                    <a href="{% url 'settings_app:dashboard' %}"
+                    class="flex items-center gap-3 px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                        <i class="fa-sharp fa-solid fa-sliders text-gray-900 dark:text-volt"></i><span>Настройки</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА -->
+        <div>
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                <div class="flex items-center justify-between gap-4 mb-6">
+                    <h3 class="text-lg font-bold flex items-center gap-2 text-gray-900 dark:text-white">
+                        <i class="fas fa-history text-gray-900 dark:text-volt"></i> История покупок
+                    </h3>
+                    <span class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                        Все заказы ({{ counter|default:0 }})
+                    </span>
+                </div>
+
+                {% if orders %}
+                    <div class="space-y-4">
+                    {% for order in orders %}
+                        <div class="order-item flex gap-4 pb-4 border-b border-gray-200 dark:border-edge last:border-0 last:pb-0">
+                            <div class="w-12 h-12 bg-white dark:bg-void border border-gray-200 dark:border-edge flex items-center justify-center text-2xl shrink-0">
+                                {% with first_item=order.items.all.0 %}
+                                    {% if first_item.product.category.name == 'Ноутбуки' or first_item.product.category.name == 'ПК' %}💻
+                                    {% elif first_item.product.category.name == 'Смартфоны' %}📱
+                                    {% elif first_item.product.category.name == 'Планшеты' %}📟
+                                    {% else %}📦{% endif %}
+                                {% endwith %}
+                            </div>
+
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-3">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white leading-snug">
+                                        {% for item in order.items.all %}
+                                            {{ item.product.name }}
+                                            <span class="text-gray-500 dark:text-gray-400">({{ item.quantity }} шт.)</span>
+                                            {% if not forloop.last %}, {% endif %}
+                                        {% empty %}
+                                            Товар удален из каталога
+                                        {% endfor %}
+                                    </span>
+                                    <span class="text-sm font-black font-mono text-gray-900 dark:text-white whitespace-nowrap">
+                                        {{ order.total_price|floatformat:"0" }} ₽
+                                    </span>
+                                </div>
+
+                                <p class="mt-1 text-[11px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                    Заказ №{{ order.id }} • {{ order.created_at|date:"d b Y в H:i" }}
+                                </p>
+
+                                <span class="inline-block mt-2 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border
+                                    {% if order.status == 'pending' %}border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400
+                                    {% elif order.status == 'succeeded' %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt
+                                    {% elif order.status == 'shipped' %}border-volt text-gray-900 dark:text-volt
+                                    {% elif order.status == 'delivered' %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt
+                                    {% elif order.status == 'canceled' %}border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400
+                                    {% else %}border-gray-300 dark:border-edge text-gray-500 dark:text-gray-400{% endif %}">
+                                    {% if order.status == 'pending' %}Оформлен
+                                    {% elif order.status == 'succeeded' %}Оплачен
+                                    {% elif order.status == 'shipped' %}В пути
+                                    {% elif order.status == 'delivered' %}Доставлен
+                                    {% elif order.status == 'canceled' %}Отменён
+                                    {% else %}{{ order.status|default:"Неизвестно" }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-6">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">У вас пока нет совершённых заказов.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- DaData -->
+<link href="https://cdn.jsdelivr.net/npm/@dadata/suggestions@25.11.0/dist/suggestions.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@dadata/suggestions@25.11.0/dist/suggestions.min.js"></script>
+
+<script>
+    var dadataInputField = document.getElementById("address");
+    if (dadataInputField && typeof Dadata !== 'undefined') {
+        Dadata.createSuggestions(dadataInputField, {
+            token: "e69a6499e0a1e905128b488cd68ffeda91a377ab",
+            type: "address"
+        });
+    }
+</script>
+
+<script>
+    document.addEventListener('htmx:afterSwap', function(event) {
+        if (event.detail.target.id === 'profile-form-container') {
+            var input = document.getElementById('address');
+            if (input && typeof Dadata !== 'undefined') {
+                Dadata.createSuggestions(input, {
+                    token: "e69a6499e0a1e905128b488cd68ffeda91a377ab",
+                    type: "address"
+                });
+            }
+        }
+    });
+</script>

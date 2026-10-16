@@ -1,0 +1,57 @@
+{% extends 'shop/base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-6 py-20 text-center">
+
+    <div class="text-6xl mb-6 text-gray-900 dark:text-volt">
+        <i class="fas fa-check-circle"></i>
+    </div>
+
+    <h2 class="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white">
+        🎉 Заказ успешно оформлен!
+    </h2>
+
+    <p class="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-md mx-auto">
+        Ваша корзина очищена, товары списаны со склада,
+        а администратору на Gmail улетело уведомление.
+    </p>
+
+    {% if order %}
+    <div class="mt-10 bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge divide-y divide-gray-200 dark:divide-edge text-left">
+
+        <div class="flex items-center justify-between gap-4 px-6 py-4">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                Номер заказа
+            </span>
+            <span class="text-lg font-black font-mono text-gray-900 dark:text-white">
+                #{{ order.id }}
+            </span>
+        </div>
+
+        <div class="flex items-center justify-between gap-4 px-6 py-4">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                Сумма
+            </span>
+            <span class="text-lg font-black font-mono text-gray-900 dark:text-white">
+                {{ order.total_price }} ₽
+            </span>
+        </div>
+
+        <div class="flex items-center justify-between gap-4 px-6 py-4">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                Дата
+            </span>
+            <span class="text-sm font-mono text-gray-900 dark:text-white">
+                {{ order.created_at|date:"d.m.Y H:i" }}
+            </span>
+        </div>
+
+    </div>
+    {% endif %}
+
+    <a href="{% url 'shop:product_list' %}"
+       class="inline-flex items-center gap-2 mt-10 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+        <i class="fas fa-arrow-left"></i> Вернуться на главную
+    </a>
+</div>
+{% endblock %}

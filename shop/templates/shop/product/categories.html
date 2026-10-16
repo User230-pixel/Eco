@@ -1,0 +1,48 @@
+{% extends "shop/base.html" %}
+{% load static %}
+{% block title %}Категории{% endblock title %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-6">
+
+    <section class="py-10" id="products">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            {% for category in categories %}
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+
+                <div class="relative aspect-square bg-white dark:bg-void border-b border-gray-200 dark:border-edge flex items-center justify-center overflow-hidden">
+                    {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                        <div class="text-5xl text-gray-400 dark:text-gray-500">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="p-5">
+                    <h3 class="font-bold text-base text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-volt">
+                        {{ category.name }}
+                    </h3>
+
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-edge flex items-center justify-end">
+                        <a href="{{ category.get_absolute_url }}"
+                           class="w-9 h-9 bg-volt text-black flex items-center justify-center hover:bg-black hover:text-volt dark:hover:bg-white dark:hover:text-black">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full py-16 text-center">
+                <div class="text-5xl mb-4 text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Категории не найдены</p>
+            </div>
+            {% endfor %}
+
+        </div>
+    </section>
+</div>
+{% endblock content %}

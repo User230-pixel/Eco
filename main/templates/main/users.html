@@ -1,0 +1,89 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Список пользователей{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <!-- ===== СТАТИСТИКА И ПОИСК ===== -->
+    <div class="mb-8">
+        <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+            <div class="relative flex-1 max-w-md">
+                <input type="text"
+                       name="search"
+                       value="{{ search_query }}"
+                       placeholder="Поиск пользователей..."
+                       hx-get="{% url 'main:users' %}"
+                       hx-trigger="keyup changed delay:300ms"
+                       hx-target=".user-grid-list"
+                       hx-swap="innerHTML"
+                       class="w-full bg-white dark:bg-void border border-gray-300 dark:border-edge px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-black dark:focus:border-volt">
+            </div>
+
+            <div class="flex items-baseline gap-2">
+                <span class="text-4xl font-black font-mono text-gray-900 dark:text-white">
+                    {{ users.paginator.count|default:0 }}
+                </span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                    пользователей зарегистрировано
+                </span>
+            </div>
+
+            {% if search_query %}
+                <span class="text-sm font-mono text-gray-500 dark:text-gray-400">
+                    по запросу «{{ search_query }}»
+                </span>
+            {% endif %}
+        </div>
+
+        <!-- Детальная статистика по ролям -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge px-4 py-3">
+                <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Потребителей</div>
+                <div class="mt-1 text-xl font-black font-mono text-gray-900 dark:text-white">{{ total_users_count|default:0 }}</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge px-4 py-3">
+                <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Водителей</div>
+                <div class="mt-1 text-xl font-black font-mono text-gray-900 dark:text-white">{{ total_drivers_count|default:0 }}</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge px-4 py-3">
+                <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Блогеров</div>
+                <div class="mt-1 text-xl font-black font-mono text-gray-900 dark:text-white">{{ total_bloggers_count|default:0 }}</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge px-4 py-3">
+                <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Модераторов</div>
+                <div class="mt-1 text-xl font-black font-mono text-gray-900 dark:text-white">{{ total_moderators_count|default:0 }}</div>
+            </div>
+            <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge px-4 py-3">
+                <div class="text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Администраторов</div>
+                <div class="mt-1 text-xl font-black font-mono text-gray-900 dark:text-white">{{ total_admins_count|default:0 }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== СПИСОК ПОЛЬЗОВАТЕЛЕЙ ===== -->
+    {% if users %}
+        <div class="user-grid-list space-y-3">
+            {% include 'main/user_list.html' %}
+        </div>
+    {% else %}
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-12 text-center">
+            <div class="text-5xl mb-4 text-gray-400 dark:text-gray-500">
+                <i class="fas fa-users-slash"></i>
+            </div>
+            <h2 class="text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+                Пользователи не найдены
+            </h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                В базе данных пока нет зарегистрированных аккаунтов.
+            </p>
+            <a href="{% url 'main:profile' %}"
+               class="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                <i class="fas fa-arrow-left"></i> Вернуться в личный кабинет
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

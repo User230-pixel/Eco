@@ -1,0 +1,54 @@
+<div id="driver-order-{{ order.id }}"
+     class="flex items-center justify-between gap-4 p-4 border border-gray-200 dark:border-edge bg-gray-50 dark:bg-panel">
+
+    {# ==== ЛЕВАЯ ЧАСТЬ: данные заказа ==== #}
+    <div class="min-w-0">
+        <div class="text-sm font-bold text-gray-900 dark:text-white">
+            Заказ #{{ order.id }}
+        </div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+            {{ order.delivery_address|truncatechars:60 }}
+        </div>
+        <div class="mt-1 text-[11px] font-mono uppercase tracking-widest
+            {% if order.status == 'delivered' %}text-volt
+            {% elif order.status == 'shipped' %}text-gray-900 dark:text-volt
+            {% elif order.status == 'cancelled' %}text-red-600 dark:text-red-400
+            {% else %}text-gray-500 dark:text-gray-400{% endif %}">
+            {{ order.get_status_display }}
+        </div>
+    </div>
+
+    {# ==== ПРАВАЯ ЧАСТЬ: кнопка ==== #}
+    <div class="flex gap-2 shrink-0">
+        {% if order.status == 'pending' or order.status == 'processing' %}
+            <button
+                hx-post="{% url 'main:driver_update_order_status' order.id %}"
+                hx-vals='{"status": "shipped"}'
+                hx-target="#driver-order-{{ order.id }}"
+                hx-swap="outerHTML"
+                class="px-4 py-2 border border-gray-300 dark:border-edge text-xs font-mono uppercase tracking-widest
+                       text-gray-700 dark:text-gray-300
+                       hover:border-black hover:text-black
+                       dark:hover:border-volt dark:hover:text-volt">
+                <i class="fas fa-truck mr-1"></i> В пути
+            </button>
+
+        {% elif order.status == 'shipped' %}
+            <button
+                hx-post="{% url 'main:driver_update_order_status' order.id %}"
+                hx-vals='{"status": "delivered"}'
+                hx-target="#driver-order-{{ order.id }}"
+                hx-swap="outerHTML"
+                class="px-4 py-2 border border-volt text-xs font-mono uppercase tracking-widest
+                       text-black dark:text-volt bg-volt/10
+                       hover:bg-volt hover:text-black">
+                <i class="fas fa-check mr-1"></i> Доставлен
+            </button>
+
+        {% else %}
+            <span class="px-4 py-2 text-xs font-mono uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                {{ order.get_status_display }}
+            </span>
+        {% endif %}
+    </div>
+</div>

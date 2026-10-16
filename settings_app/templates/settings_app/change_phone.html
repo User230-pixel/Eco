@@ -1,0 +1,81 @@
+{% extends "main/base.html" %}
+{% block title %}Смена номера телефона{% endblock title %}
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center px-6 py-10">
+    <div class="w-full max-w-md bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-8">
+
+        <h2 class="text-2xl font-black tracking-tight flex items-center gap-3 mb-6 text-gray-900 dark:text-white">
+            <i class="fas fa-phone-alt text-gray-900 dark:text-volt"></i> Смена номера телефона
+        </h2>
+
+        {% if error_message %}
+        <div class="auth-message auth-error flex items-center gap-3 px-4 py-3 mb-4 border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ error_message }}
+        </div>
+        {% endif %}
+
+        {% if messages %}
+            {% for message in messages %}
+            <div class="auth-message {% if message.tags == 'error' %}auth-error border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400{% else %}auth-success border-volt/40 bg-volt/10 text-gray-900 dark:text-volt{% endif %} flex items-center gap-3 px-4 py-3 mb-4 border text-sm font-medium">
+                <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %}"></i>
+                {{ message }}
+            </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            {% if not phone_flow_active %}
+            <!-- ШАГ 1 -->
+            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+                Текущий номер: <strong class="text-gray-900 dark:text-white">{{ request.user.phone }}</strong>.<br>
+                Укажите ваш новый номер телефона. Мы отправим на него СМС с кодом подтверждения.
+            </p>
+
+            <div class="mb-5">
+                <label for="new_phone_input" class="block text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
+                    Новый номер телефона
+                </label>
+                <input type="tel" id="new_phone_input" name="new_phone_input" placeholder="+7 (999) 123-45-67" required
+                       class="w-full bg-white dark:bg-void border border-gray-300 dark:border-edge px-4 py-3 text-sm font-mono text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-black dark:focus:border-volt">
+            </div>
+
+            <button type="submit" name="submit_phone" class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                <i class="fas fa-sms"></i> Получить код по СМС
+            </button>
+
+            {% else %}
+            <!-- ШАГ 2 -->
+            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+                Мы отправили код подтверждения на номер <strong class="text-gray-900 dark:text-white font-mono">{{ pending_phone }}</strong>. Введите его для завершения привязки.
+            </p>
+
+            <div class="mb-5">
+                <label for="entered_code" class="block text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
+                    Код подтверждения из СМС
+                </label>
+                <input type="text" id="entered_code" name="entered_code" placeholder="Введите 6 цифр" autocomplete="off" required
+                       class="w-full bg-white dark:bg-void border border-gray-300 dark:border-edge px-4 py-3 text-sm font-mono tracking-widest text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-black dark:focus:border-volt">
+            </div>
+
+            <button type="submit" name="submit_code" class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                <i class="fas fa-check"></i> Подтвердить и сохранить
+            </button>
+            {% endif %}
+        </form>
+
+        {% if phone_flow_active %}
+        <div class="mt-4">
+            <form method="post" action="{% url 'settings_app:change_phone_resend' %}">
+                {% csrf_token %}
+                <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    <i class="fas fa-sync-alt"></i> Отправить СМС еще раз
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}
