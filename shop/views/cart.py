@@ -1,8 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
-import json
-from django.contrib.messages import get_messages
 
 from ..models import (
     Product,
@@ -13,7 +11,12 @@ from ..models import (
 )
 
 from main.models import Profile
-from .payments import _Rollback
+from .services import (
+    InsufficientStock,
+    cancel_order,
+    fail_unpaid_order,
+    reserve_order_stock,
+)
 
 from shop.views.views import (
     get_cached_categories
@@ -23,24 +26,18 @@ from main.views.views import (
     rate_limit
 )
 
-from .payments import (
-    _async_order_email,
-)
-
 from django.contrib import messages
-from django.conf import settings
-from django.db import transaction, IntegrityError
+from django.db import transaction
 
-import uuid
 from yookassa import Payment as YookassaPayment
+from yookassa.domain.exceptions import ApiError
 from django.urls import reverse
 
-from django.db.models import F
-
 import logging
-import threading
 
 from django.db.models import Sum
+
+from django.views.decorators.http import require_POST
 
 logger = logging.getLogger(__name__)
 
@@ -119,61 +116,95 @@ def add_to_cart(request, id, slug):
     return redirect(request.META.get("HTTP_REFERER", "shop:product_list"))
 
 @login_required(login_url='main:get_login_form')
+@require_POST
 @rate_limit('checkout', 35, 300)
 def checkout(request):
-    cart = get_object_or_404(Cart, user=request.user)
-    cart_items = cart.items.filter(is_selected=True).select_related('product')
-
-    if not cart_items.exists():
-        messages.warning(request, "Вы не выбрали ни одного товара.")
-        return redirect('shop:cart_detail')
-
-    profile, _ = Profile.objects.get_or_create(user=request.user)
-    address = getattr(profile, "address", "") or ""
-
+    order = None
     try:
         with transaction.atomic():
-            order = Order.objects.create(
-                user=request.user,
-                status="awaiting_payment",
-                total_price=0,
-                delivery_address=address,
+            cart = Cart.objects.select_for_update().get(user=request.user)
+            order = (
+                Order.objects.select_for_update()
+                .filter(user=request.user, status="awaiting_payment")
+                .order_by("-created_at")
+                .first()
             )
 
-            total_sum = 0
-            for item in cart_items:
-                product = (
-                    Product.objects
-                    .select_for_update()
-                    .get(id=item.product_id)
+            if order is None:
+                cart_items = list(
+                    cart.items.filter(is_selected=True)
+                    .select_related("product")
+                    .order_by("product_id", "id")
                 )
-                if product.stock < item.quantity:
-                    messages.error(
-                        request,
-                        f"Товара {product.name} нет в наличии в нужном количестве. "
-                        f"Доступно: {product.stock} шт.",
+                if not cart_items:
+                    messages.warning(request, "Вы не выбрали ни одного товара.")
+                    return redirect("shop:cart_detail")
+
+                profile, _ = Profile.objects.get_or_create(user=request.user)
+                order = Order.objects.create(
+                    user=request.user,
+                    status="awaiting_payment",
+                    total_price=0,
+                    delivery_address=profile.address or "",
+                )
+
+                total_sum = 0
+                for item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        price=item.product.price,
+                        quantity=item.quantity,
                     )
-                    raise _Rollback()
+                    total_sum += item.product.price * item.quantity
 
-                OrderItem.objects.create(
-                    order=order,
-                    product=product,
-                    price=product.price,
-                    quantity=item.quantity,
-                )
-                total_sum += product.price * item.quantity
+                order.total_price = total_sum
+                order.save(update_fields=["total_price"])
 
-            order.total_price = total_sum
-            order.save(update_fields=["total_price"])
-    except _Rollback:
+            reserve_order_stock(order)
+    except InsufficientStock as e:
+        messages.error(request, str(e))
         return redirect('shop:cart_detail')
     except Exception as e:
         logger.error("Ошибка создания заказа для user=%s: %s", request.user.id, e, exc_info=True)
         messages.error(request, "Ошибка оформления заказа. Обратитесь в поддержку.")
         return redirect('shop:cart_detail')
 
+    if order.yookassa_payment_id:
+        try:
+            payment = YookassaPayment.find_one(order.yookassa_payment_id)
+        except Exception as e:
+            logger.error(
+                "Ошибка получения платежа %s для order=%s: %s",
+                order.yookassa_payment_id,
+                order.id,
+                e,
+                exc_info=True,
+            )
+            messages.error(request, "Не удалось проверить платёж. Попробуйте ещё раз позже.")
+            return redirect("shop:cart_detail")
+
+        if payment.status == "succeeded":
+            request.session["last_payment_id"] = payment.id
+            return redirect("shop:payment_success")
+        if payment.status == "canceled":
+            cancel_order(order)
+            messages.error(request, "Предыдущий платёж отменён. Повторите оформление заказа.")
+            return redirect("shop:cart_detail")
+
+        confirmation_url = getattr(
+            getattr(payment, "confirmation", None),
+            "confirmation_url",
+            None,
+        )
+        if confirmation_url:
+            return redirect(confirmation_url)
+
+        messages.error(request, "Платёж ещё обрабатывается. Попробуйте позже.")
+        return redirect("shop:cart_detail")
+
     success_url = request.build_absolute_uri(reverse('shop:payment_success'))
-    idempotence_key = str(uuid.uuid4())
+    idempotence_key = f"eco-order-{order.pk}"
 
     try:
         payment = YookassaPayment.create(
@@ -189,11 +220,35 @@ def checkout(request):
             },
             idempotence_key,
         )
+    except ApiError as e:
+        status_code = getattr(e, "HTTP_CODE", 0)
+        logger.error(
+            "Ошибка создания платежа в ЮKassa для order=%s (HTTP %s): %s",
+            order.id,
+            status_code,
+            e,
+            exc_info=True,
+        )
+        if 400 <= status_code < 500 and status_code not in (409, 429):
+            fail_unpaid_order(order)
+            messages.error(
+                request,
+                "ЮKassa отклонила создание платежа. Резерв товара снят; попробуйте позже.",
+            )
+        else:
+            messages.error(
+                request,
+                "Не удалось подтвердить создание платежа. Повторите оформление: "
+                "заказ и резерв товара сохранены, повторный запрос не создаст второй платёж.",
+            )
+        return redirect("shop:cart_detail")
     except Exception as e:
         logger.error("Ошибка создания платежа в ЮKassa для order=%s: %s", order.id, e, exc_info=True)
-        order.status = "failed"
-        order.save(update_fields=["status"])
-        messages.error(request, "Ошибка платежной системы. Пожалуйста, обратитесь в поддержку.")
+        messages.error(
+            request,
+            "Не удалось подтвердить создание платежа. Повторите оформление: "
+            "заказ и резерв товара сохранены, повторный запрос не создаст второй платёж.",
+        )
         return redirect('shop:cart_detail')
 
     order.yookassa_payment_id = payment.id
@@ -202,7 +257,7 @@ def checkout(request):
     request.session['last_payment_id'] = payment.id
     return redirect(payment.confirmation.confirmation_url)
 
-
+@require_POST
 @login_required(login_url='main:get_login_form')
 def increase_cart_item(request, item_id):
     """Увеличить количество товара на 1 с проверкой остатка на складе"""
@@ -224,6 +279,7 @@ def increase_cart_item(request, item_id):
 
     return redirect("shop:cart_detail")
 
+@require_POST
 @login_required(login_url='main:get_login_form')
 def decrease_cart_item(request, item_id):
     """Уменьшить количество товара на 1"""
@@ -245,6 +301,7 @@ def decrease_cart_item(request, item_id):
 
     return redirect("shop:cart_detail")
 
+@require_POST
 @login_required(login_url='main:get_login_form')
 def remove_from_cart(request, item_id):
     """Полностью удалить товар из корзины"""
@@ -260,6 +317,7 @@ def remove_from_cart(request, item_id):
     
     return redirect("shop:cart_detail")
 
+@require_POST
 @login_required(login_url='main:get_login_form')
 def clear_cart(request):
     """Очистить всю корзину"""

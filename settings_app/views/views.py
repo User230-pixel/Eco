@@ -47,4 +47,3 @@ def send_verification_code_to_phone(phone_number, purpose="change_phone", user=N
     )
     thread.start()
     return True
-

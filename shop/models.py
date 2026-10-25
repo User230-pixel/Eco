@@ -102,10 +102,16 @@ class Product(models.Model):
 
     def clean(self):
         super().clean()
-        if hasattr(self, 'user') and self.user:
-            if not (self.user.role_shopper or self.user.role_admin or self.user.is_superuser):
-                raise ValidationError("Добавление товаров разрешено только продавцам или администраторам.")
+        if self.user_id is not None and not (
+            self.user.role_shopper or self.user.role_admin or self.user.is_superuser
+        ):
+            raise ValidationError(
+                "Добавление товаров разрешено только продавцам или администраторам."
+            )
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
 
 User = get_user_model()
@@ -215,6 +221,7 @@ class Order(models.Model):
     total_price = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00, verbose_name="Общая сумма"
     )
+    stock_reserved = models.BooleanField(default=False)
     comment = models.TextField(
         blank=True, null=True, verbose_name="Комментарий к заказу"
     )

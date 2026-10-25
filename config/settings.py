@@ -159,7 +159,7 @@ EMAIL_PORT = int(env("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", default=True)
 EMAIL_TIMEOUT = int(env("EMAIL_TIMEOUT", "10"))
 
-EMAIL_HOST_USER = env("EMAIL_HOST_USER", required=True)
+EMAIL_HOST_USER = env("DEFAULT_FROM_EMAIL", required=True)
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", required=True)
 
 # FIX 6: DEFAULT_FROM_EMAIL теперь обязателен — никаких noreply@example.com в проде.

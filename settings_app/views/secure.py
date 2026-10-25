@@ -107,7 +107,7 @@ def smart_password_reset(request):
             try:
                 user_for_notify = None
                 with transaction.atomic():
-                    verification = VerificationCode.objects.filter(
+                    verification = VerificationCode.objects.select_for_update().filter(
                         email=reset_email,
                         purpose="reset",
                         is_used=False,
@@ -412,21 +412,24 @@ def change_email_view(request):
                 messages.error(request, "Слишком много попыток. Запросите новый код.")
                 return redirect("settings_app:edit-email")
 
-            valid_code = VerificationCode.objects.filter(
-                email=pending_email,
-                purpose="change_email",
-                is_used=False,
-                expires_at__gt=timezone.now(),
-            ).first()
+            with transaction.atomic():
+                valid_code = VerificationCode.objects.select_for_update().filter(
+                    email=pending_email,
+                    purpose="change_email",
+                    is_used=False,
+                    expires_at__gt=timezone.now(),
+                ).first()
+                code_is_valid = bool(valid_code and valid_code.check_code(entered_code))
 
-            if valid_code and valid_code.check_code(entered_code):
-                valid_code.is_used = True
-                valid_code.save(update_fields=["is_used"])
+                if code_is_valid:
+                    valid_code.is_used = True
+                    valid_code.save(update_fields=["is_used"])
+                    current_user = request.user
+                    current_user.email = pending_email
+                    current_user.save(update_fields=["email"])
+
+            if code_is_valid:
                 cache.delete(user_attempts_key)
-
-                current_user = request.user
-                current_user.email = pending_email
-                current_user.save(update_fields=["email"])
 
                 send_notifications(
                     user=current_user,

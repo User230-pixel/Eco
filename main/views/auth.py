@@ -233,7 +233,7 @@ def verify_phone_page(request):
 
         try:
             with transaction.atomic():
-                verification = VerificationCode.objects.filter(
+                verification = VerificationCode.objects.select_for_update().filter(
                     phone_number=user_data["phone_number"],
                     purpose="register",
                     is_used=False,

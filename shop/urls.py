@@ -52,4 +52,5 @@ urlpatterns = [
     ),
     path("favorite/<int:product_id>/toggle/", favorites.toggle_favorite, name="toggle_favorite"),
     path("favorites/", favorites.favorites_list, name="favorites_list"),
+    path("favorites/clear/", favorites.clear_favorites, name="clear_favorites"),
 ]

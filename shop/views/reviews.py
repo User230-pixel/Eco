@@ -73,9 +73,8 @@ def add_review_htmx(request, id, slug):
                 recipient_list=recipients,
                 fail_silently=False,
             )
-        except Exception as mail_err:
-            logger.error(f"Ошибка отправки почты в вебхуке: {mail_err}")
-            return HttpResponse(status=200)
+        except Exception:
+            logger.exception("Ошибка отправки email-уведомления о новом отзыве")
 
         html_content = f"""
         <div class="review-item animate-[fadeIn_0.3s_ease-in-out] bg-white dark:bg-void border border-gray-300 dark:border-edge p-[15px] rounded-[var(--radius)]">

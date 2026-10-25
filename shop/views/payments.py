@@ -2,7 +2,6 @@ import ipaddress
 import json
 import logging
 import threading
-import uuid
 
 from django.conf import settings
 from django.contrib import messages
@@ -34,9 +33,6 @@ logger = logging.getLogger(__name__)
 YOOKASSA_WEBHOOK_NETWORKS = [
     ipaddress.ip_network("185.32.187.0/24"),
 ]
-
-class _Rollback(Exception):
-    pass
 
 def _is_yookassa_ip(ip: str) -> bool:
     try:
@@ -81,8 +77,13 @@ def yookassa_webhook(request):
     try:
         payment = YookassaPayment.find_one(payment_id)
     except Exception as e:
-        logger.error("Ошибка запроса к ЮKassa для платежа %s: %s", payment_id, e)
-        return HttpResponse(status=200)
+        logger.error(
+            "Ошибка запроса к ЮKassa для платежа %s: %s",
+            payment_id,
+            e,
+            exc_info=True,
+        )
+        return HttpResponse(status=503)
 
     metadata = payment.metadata or {}
     order_id = metadata.get("order_id")
@@ -108,8 +109,8 @@ def yookassa_webhook(request):
         try:
             changed = mark_order_paid(order, payment)
         except PaymentError as e:
-            logger.error("Оплата заказа %s: %s", order_id, e)
-            return HttpResponse(status=200)
+            logger.error("Оплата заказа %s: %s", order_id, e, exc_info=True)
+            return HttpResponse(status=503)
         except Exception as e:
             logger.error("Транзакция для заказа %s: %s", order_id, e, exc_info=True)
             return HttpResponse(status=500)

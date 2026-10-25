@@ -1,0 +1,62 @@
+{% extends "shop/base.html" %}
+
+{% block title %}Избранное — AliEco{% endblock %}
+
+{% block content %}
+<main class="max-w-5xl mx-auto px-6 py-12">
+    <header class="flex items-baseline justify-between mb-8">
+        <h1 class="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white">Избранное</h1>
+        <span class="text-sm text-gray-500 dark:text-gray-400">{{ favorites|length }} шт.</span>
+    </header>
+
+    {% if favorites %}
+    <ul class="divide-y divide-gray-200 dark:divide-edge border-y border-gray-200 dark:border-edge">
+        {% for favorite in favorites %}
+            {% with product=favorite.product %}
+            <li class="py-4 flex items-center gap-4 group">
+                <a href="{{ product.get_absolute_url }}" class="shrink-0 w-20 h-20 bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge overflow-hidden">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy"
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endif %}
+                </a>
+                <div class="min-w-0 flex-1">
+                    <a href="{{ product.get_absolute_url }}"
+                       class="block font-semibold text-gray-900 dark:text-white truncate hover:text-black dark:hover:text-volt">
+                        {{ product.name }}
+                    </a>
+                    {% if product.category2nd.brand %}
+                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate">{{ product.category2nd.brand }}</p>
+                    {% endif %}
+                </div>
+                <span class="font-black font-mono text-gray-900 dark:text-white whitespace-nowrap">
+                    {{ product.price|floatformat:"0" }} ₽
+                </span>
+                <form method="post" action="{% url 'shop:toggle_favorite' product.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="return_to" value="{% url 'shop:favorites_list' %}">
+                    <button type="submit" aria-label="Убрать из избранного"
+                            class="w-10 h-10 flex items-center justify-center border border-gray-300 dark:border-edge text-gray-500 dark:text-gray-400 hover:border-red-500 hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                        <i class="fas fa-trash-alt text-sm"></i>
+                    </button>
+                </form>
+            </li>
+            {% endwith %}
+        {% endfor %}
+    </ul>
+    {% else %}
+        <div class="py-20 text-center border border-dashed border-gray-300 dark:border-edge">
+            <i class="far fa-heart text-5xl text-gray-400 dark:text-gray-500"></i>
+            <p class="mt-4 text-lg font-bold text-gray-700 dark:text-gray-300">Пока нет избранных товаров</p>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Добавляйте товары в избранное, чтобы быстро найти их позже.</p>
+            <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 mt-6 px-5 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-colors">
+                <i class="fas fa-arrow-left"></i> Перейти к товарам
+            </a>
+        </div>
+    {% endif %}
+</main>
+{% endblock %}

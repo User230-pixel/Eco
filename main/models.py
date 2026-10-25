@@ -80,6 +80,10 @@ class CustomUser(AbstractUser):
         if selected_roles_count == 0:
             raise ValidationError("У пользователя должна быть выбрана хотя бы одна роль.")
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
     def is_driver(self):
         return self.role_driver
 

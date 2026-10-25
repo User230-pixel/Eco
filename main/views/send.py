@@ -103,27 +103,23 @@ def _async_welcome_email(username, email):
 
 
 def send_verification_code_to_email(email, purpose="register"):
-    """
-    Генерация кода и отправка на email.
-    purpose: "register", "reset", "change_email"
-    """
-    VerificationCode.objects.filter(
-        email=email,
-        purpose=purpose,
-        is_used=False,
-    ).update(is_used=True)
+    with transaction.atomic():
+        VerificationCode.objects.select_for_update().filter(
+            email=email,
+            purpose=purpose,
+            is_used=False,
+        ).update(is_used=True)
 
-    verification, raw_code = VerificationCode.generate(
-        purpose=purpose,
-        email=email,
-    )
+        verification, raw_code = VerificationCode.generate(
+            purpose=purpose,
+            email=email,
+        )
 
-    thread = threading.Thread(
+    transaction.on_commit(lambda: threading.Thread(
         target=_async_send_code_email,
         args=(email, raw_code, purpose),
         daemon=True,
-    )
-    thread.start()
+    ).start())
 
 
 def get_verify_form(request):
@@ -173,7 +169,7 @@ def verify_code_page(request):
 
             try:
                 with transaction.atomic():
-                    verification = VerificationCode.objects.filter(
+                    verification = VerificationCode.objects.select_for_update().filter(
                         email=user_data["email"],
                         purpose="register",
                         is_used=False,

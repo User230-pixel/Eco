@@ -82,7 +82,7 @@ def get_client_ip(request):
     return remote_addr
 
 
-def send_notifications(user, title, message, notification_type, url):
+def send_notifications(user, title, message, notification_type, url=""):
     if user is None:
         return None
     return Notification.objects.create(

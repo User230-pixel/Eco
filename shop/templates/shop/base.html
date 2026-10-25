@@ -224,6 +224,9 @@
                     </div>
 
                     {% if request.user.is_authenticated %}
+                        <a href="{% url 'shop:favorites_list' %}" aria-label="Избранное" title="Избранное" class="w-10 h-10 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-red-500 dark:hover:border-volt">
+                            <i class="far fa-heart"></i>
+                        </a>
                         <a href="{% url 'shop:cart_detail' %}" class="relative w-10 h-10 border border-gray-300 dark:border-edge flex items-center justify-center text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
                             <i class="fas fa-shopping-cart"></i>
                             {% if request.user.cart.get_total_quantity %}

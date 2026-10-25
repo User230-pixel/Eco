@@ -12,7 +12,52 @@ logger = logging.getLogger(__name__)
 
 
 class PaymentError(Exception):
-    """Бизнес-ошибка обработки платежа (не ретраить)."""
+    """A payment could not be applied to its order."""
+
+
+class InsufficientStock(Exception):
+    """Raised when an order cannot reserve all requested inventory."""
+
+
+def fail_unpaid_order(order):
+    with transaction.atomic():
+        order = Order.objects.select_for_update().get(pk=order.pk)
+        if order.status != "awaiting_payment":
+            return False
+
+        if order.stock_reserved:
+            for item in order.items.all():
+                Product.objects.filter(pk=item.product_id).update(
+                    stock=F("stock") + item.quantity
+                )
+            order.stock_reserved = False
+
+        order.status = "failed"
+        order.save(update_fields=["status", "stock_reserved"])
+        return True
+
+
+def reserve_order_stock(order):
+    with transaction.atomic():
+        order = Order.objects.select_for_update().get(pk=order.pk)
+        if order.stock_reserved:
+            return
+
+        items = order.items.select_related("product").order_by("product_id", "id")
+        for item in items:
+            reserved = Product.objects.filter(
+                pk=item.product_id,
+                stock__gte=item.quantity,
+            ).update(stock=F("stock") - item.quantity)
+            if not reserved:
+                product = Product.objects.filter(pk=item.product_id).only("stock").first()
+                available = product.stock if product else 0
+                raise InsufficientStock(
+                    f"Недостаточно товара «{item.product.name}». Доступно: {available} шт."
+                )
+
+        order.stock_reserved = True
+        order.save(update_fields=["stock_reserved"])
 
 
 def mark_order_paid(order, payment) -> bool:
@@ -30,14 +75,12 @@ def mark_order_paid(order, payment) -> bool:
                         order.id, order.status)
             return False
 
-        for item in order.items.all():
-            updated = Product.objects.filter(
-                id=item.product_id, stock__gte=item.quantity
-            ).update(stock=F("stock") - item.quantity)
-            if not updated:
-                raise PaymentError(
-                    f"Не хватает товара '{item.product.name}' для заказа {order.id}"
-                )
+        if not order.stock_reserved:
+            try:
+                reserve_order_stock(order)
+            except InsufficientStock as e:
+                raise PaymentError(str(e)) from e
+            order.stock_reserved = True
 
         product_ids = [i.product_id for i in order.items.all()]
         CartItem.objects.filter(
@@ -50,7 +93,12 @@ def mark_order_paid(order, payment) -> bool:
 
         order.status = "pending"
         order.yookassa_payment_id = payment.id
-        order.save(update_fields=["status", "delivery_address", "yookassa_payment_id"])
+        order.save(update_fields=[
+            "status",
+            "delivery_address",
+            "yookassa_payment_id",
+            "stock_reserved",
+        ])
         return True
 
 
@@ -62,7 +110,7 @@ def cancel_order(order) -> bool:
             .prefetch_related("items__product")
             .get(pk=order.pk)
         )
-        if order.status in ("cancelled", "delivered"):
+        if order.status in ("cancelled", "failed", "delivered"):
             return False
 
         if order.status in ("processing", "shipped"):
@@ -71,16 +119,14 @@ def cancel_order(order) -> bool:
             )
             return False
 
-        was_paid = order.status == "pending"
-
-        order.status = "cancelled"
-        order.save(update_fields=["status"])
-
-        if was_paid:
+        if order.stock_reserved or order.status == "pending":
             for item in order.items.all():
                 Product.objects.filter(id=item.product_id).update(
                     stock=F("stock") + item.quantity
                 )
+            order.stock_reserved = False
+        order.status = "cancelled"
+        order.save(update_fields=["status", "stock_reserved"])
         return True
 
 
