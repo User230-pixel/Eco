@@ -21,9 +21,6 @@ def profile(request, user_id):
     """Публичный профиль. Свой → редирект в кабинет."""
     target = get_object_or_404(User, pk=user_id)
 
-    if target.pk == request.user.pk:
-        return redirect("main:cabinet")
-
     profile_obj, _ = Profile.objects.get_or_create(user=target)
 
     if target.first_name and target.last_name:
@@ -142,9 +139,6 @@ def _render_cabinet_error_response(request, user, profile_obj, error_messages, p
 def toggle_profile_like(request, user_id):
     target = get_object_or_404(User, pk=user_id)
 
-    if target.pk == request.user.pk:
-        return JsonResponse({"error": "Нельзя лайкать себя"}, status=400)
-
     profile_obj, _ = Profile.objects.get_or_create(user=target)
 
     like, created = ProfileLike.objects.get_or_create(
@@ -165,9 +159,6 @@ def toggle_profile_like(request, user_id):
 @require_POST
 def toggle_subscription(request, user_id):
     target = get_object_or_404(User, pk=user_id)
-
-    if target.pk == request.user.pk:
-        return JsonResponse({"error": "Нельзя подписаться на себя"}, status=400)
 
     profile_obj, _ = Profile.objects.get_or_create(user=target)
 

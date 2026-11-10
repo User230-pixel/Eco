@@ -1,14 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 
 from main.models import (
     Profile,
+    Subscription,
+    ProfileLike
 )
 from shop.models import (
     Order,
     OrderItem,
     Product,
+    SellerReply,
+    Review,
 )
 from main.forms import (
     ProfileForm,
@@ -16,21 +21,37 @@ from main.forms import (
     ChangeEmailForm,
 )
 
+from blog.models import (
+    Comment
+)
+
 from shop.views.views import get_cached_categories
 
 from main.views.views import (
-    rate_limit
+    rate_limit,
+    blogger_required,
+    shopper_required,
 )
 
 from django.contrib import messages
 from django.core.cache import cache
+from django.core.paginator import Paginator
 
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+
+User = get_user_model()
 
 @login_required(login_url='main:get_login_form')
-def profile_view(request):
+def cabinet_view(request):
     referer = request.META.get('HTTP_REFERER', '/')
     profile, created = Profile.objects.get_or_create(user=request.user)
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
+
+    paginator = Paginator(orders, 4)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
     counter = orders.count()
     
     if '/profile' not in referer:
@@ -47,21 +68,26 @@ def profile_view(request):
         "profile": profile,
         "categories": get_cached_categories(),
         "avatar": avatar,
-        "orders": orders,
+        "orders": page_obj,
         "counter": counter,
     }
-    return render(request, "shop/profile.html", context)
+    return render(request, "shop/cabinet.html", context)
 
 
 @login_required(login_url='main:get_login_form')
 @rate_limit('profile', 20, 600)
-def profile_update(request):
+def cabinet_update(request):
     if request.method == "GET":
         return redirect("shop:profile")
 
     user = request.user
     profile, created = Profile.objects.get_or_create(user=user)
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
+
+    paginator = Paginator(orders, 4)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
     counter = orders.count()
     
     LIMIT_TIMEOUT = 3600  
@@ -71,14 +97,14 @@ def profile_update(request):
     if "email" in request.POST and request.POST.get("email", "").strip() != user.email:
         if cache.get(f"cooldown_email_{user.id}"):
             messages.error(request, "Изменять Email можно не чаще, чем раз в час!")
-            return _render_profile_error_response(request, user, profile, "Email: Изменение заблокировано по времени.")
+            return _render_cabinet_error_response(request, user, profile, "Email: Изменение заблокировано по времени.")
         email_changed = True
 
     phone_value = request.POST.get("phone_number") or request.POST.get("phone")
     if phone_value is not None and phone_value.strip() != getattr(profile, 'phone', ''):
         if cache.get(f"cooldown_phone_{user.id}"):
             messages.error(request, "Изменять номер телефона можно не чаще, чем раз в час!")
-            return _render_profile_error_response(request, user, profile, "Телефон: Изменение заблокировано по времени.")
+            return _render_cabinet_error_response(request, user, profile, "Телефон: Изменение заблокировано по времени.")
         phone_changed = True
 
     if "address" not in request.POST and not request.FILES:
@@ -145,7 +171,7 @@ def profile_update(request):
         else:
             messages.error(request, "Пожалуйста, исправьте ошибки в форме")
 
-        return _render_profile_error_response(request, user, profile, error_messages, profile_form, email_form, phone_form)
+        return _render_cabinet_error_response(request, user, profile, error_messages, profile_form, email_form, phone_form)
 
     with transaction.atomic():
         if "address" in request.POST or request.FILES:
@@ -170,13 +196,13 @@ def profile_update(request):
         "profile": profile,
         "avatar": avatar,
         "success": True,
-        "orders": orders,
+        "orders": page_obj,
         "counter": counter,
     }
-    return render(request, "shop/profile_form.html", context)
+    return render(request, "shop/cabinet_form.html", context)
 
 
-def _render_profile_error_response(request, user, profile, error_messages, profile_form=None, email_form=None, phone_form=None):
+def _render_cabinet_error_response(request, user, profile, error_messages, profile_form=None, email_form=None, phone_form=None):
     if isinstance(error_messages, str):
         error_messages = [error_messages]
 
@@ -191,3 +217,47 @@ def _render_profile_error_response(request, user, profile, error_messages, profi
         "form_errors": error_messages,
     }
     return render(request, "shop/profile_form.html", context)
+
+
+@login_required(login_url='main:get_login_form')
+def profile(request, pk):
+    profile_user = get_object_or_404(User, Q(role_shopper=True) | Q(is_superuser=True), pk=pk)
+    profile_obj, _ = Profile.objects.get_or_create(user=profile_user)
+    products = Product.objects.filter(user=profile_user).select_related('category2nd').order_by('-created_at')
+    sellers = SellerReply.objects.filter(review__product__user=profile_user).select_related('review', 'review__product')[:20]
+
+
+    sellers_with_url = []
+    for reply in sellers:
+        if reply.review and reply.review.product:
+            product_url = reverse("shop:product_detail", kwargs={
+                "id": reply.review.product.id,
+                "slug": reply.review.product.slug,
+            })
+            sellers_with_url.append({
+                'reply': reply,
+                'url': f"{product_url}#review-{reply.review.id}",
+            })
+        else:
+            sellers_with_url.append({'reply': reply, 'url': None})
+
+
+    is_auth = request.user.is_authenticated
+    user_is_subscribed = is_auth and Subscription.objects.filter(subscriber=request.user, to_profile=profile_obj).exists()
+    user_has_liked = is_auth and ProfileLike.objects.filter(from_user=request.user, to_profile=profile_obj).exists()    
+
+    paginator = Paginator(products, 8)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'products': page_obj,
+        'profile_user': profile_user,
+        'profile_obj': profile_obj,
+        "user_has_liked": user_has_liked,
+        "user_is_subscribed": user_is_subscribed,
+        "sellers": sellers_with_url,
+        "products_count": paginator.count,
+        "is_owner": is_auth and request.user.pk == profile_user.pk,
+    }
+
+    return render(request, "shop/profile.html", context)

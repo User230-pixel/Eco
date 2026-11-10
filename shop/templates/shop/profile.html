@@ -1,12 +1,295 @@
 {% extends 'shop/base.html' %}
+{% load static %}
 
-{% block title %}Личный кабинет | AliEco{% endblock %}
+{% block title %}{{ profile_user.username }} — Магазин{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-6 py-10">
-    <!-- КОНТЕЙНЕР ДЛЯ HTMX (ОБНОВЛЯЕТСЯ) -->
-    <div id="profile-form-container">
-        {% include 'shop/profile_form.html' %}
+
+    {# ===== ШАПКА ПРОФИЛЯ ===== #}
+    <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-6 sm:p-8 mb-6">
+        <div class="flex flex-col sm:flex-row items-start gap-6">
+
+            {% if profile_obj.avatar %}
+                <img src="{{ profile_obj.avatar.url }}" alt="{{ profile_user.username }}"
+                     class="w-24 h-24 sm:w-28 sm:h-28 object-cover border-2 border-gray-200 dark:border-edge shrink-0">
+            {% else %}
+                <div class="w-24 h-24 sm:w-28 sm:h-28 bg-volt text-black flex items-center justify-center font-black text-4xl sm:text-5xl shrink-0 select-none">
+                    {{ profile_user.username|first|upper }}
+                </div>
+            {% endif %}
+
+            <div class="flex-1 min-w-0">
+
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white leading-tight">
+                    {% if profile_user.first_name or profile_user.last_name %}
+                        {{ profile_user.first_name }} {{ profile_user.last_name }}
+                    {% else %}
+                        {{ profile_user.username }}
+                    {% endif %}
+                </h1>
+                <p class="text-sm font-mono text-gray-500 dark:text-gray-400 mt-1">
+                    @{{ profile_user.username }} · продавец
+                </p>
+
+                {% if profile_obj.bio %}
+                    <p class="mt-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed max-w-2xl">{{ profile_obj.bio }}</p>
+                {% endif %}
+
+                {# Статистика #}
+                <div class="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    <span><i class="fas fa-box mr-1"></i><strong class="text-gray-900 dark:text-white">{{ products_count }}</strong> товаров</span>
+                    <span><i class="fas fa-heart mr-1"></i><strong class="text-gray-900 dark:text-white">{{ profile_obj.likes_count }}</strong> лайков</span>
+                    <span><i class="fas fa-users mr-1"></i><strong class="text-gray-900 dark:text-white">{{ profile_obj.subscribers_count }}</strong> подписчиков</span>
+                    <span><i class="fas fa-calendar mr-1"></i>с {{ profile_user.date_joined|date:"d.m.Y" }}</span>
+                </div>
+
+                {# Кнопки #}
+                <div class="mt-5 flex flex-wrap gap-2">
+                    {% if is_owner %}
+                        <a href="{% url 'blog:cabinet_edit' %}"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-volt text-black text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                            <i class="fas fa-pen"></i> Редактировать
+                        </a>
+                        <a href="{% url 'blog:cabinet' %}"
+                           class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                            <i class="fas fa-cog"></i> Кабинет
+                        </a>
+                    {% elif request.user.is_authenticated %}
+                        <button type="button"
+                                id="likeBtn"
+                                data-url="{% url 'main:toggle_profile_like' profile_user.pk %}"
+                                class="flex items-center gap-2 px-4 py-2.5 border text-sm font-bold transition-colors
+                                    {% if user_has_liked %}bg-volt text-black border-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}">
+                            <i class="fas fa-heart"></i>
+                            <span id="likesCount">{{ profile_obj.likes_count }}</span>
+                        </button>
+
+                        <button type="button"
+                                id="subscribeBtn"
+                                data-url="{% url 'main:toggle_subscription' profile_user.pk %}"
+                                class="flex items-center gap-2 px-4 py-2.5 border text-sm font-bold transition-colors
+                                    {% if user_is_subscribed %}bg-volt text-black border-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}">
+                            <i class="fas fa-user-plus"></i>
+                            <span id="subscribersCount">{{ profile_obj.subscribers_count }}</span>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
+
+    {# ===== НАВИГАЦИЯ ПО ТАБАМ ===== #}
+    <nav class="flex gap-0 border-b border-gray-200 dark:border-edge mb-8">
+        <a href="{% url 'blog:profile' profile_user.pk %}?tab=blog"
+           class="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-widest border-b-2
+                  border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-volt">
+            <i class="fas fa-newspaper"></i> Блог
+        </a>
+        <a href="{% url 'shop:profile' profile_user.pk %}?tab=shop"
+           class="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-widest border-b-2
+                  border-volt text-gray-900 dark:text-volt">
+            <i class="fas fa-store"></i> Магазин
+        </a>
+    </nav>
+
+    {# ===== БЛОК: ТОВАРЫ ===== #}
+    <div class="mb-6 flex items-end justify-between gap-4">
+        <h2 class="text-2xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+            <i class="fas fa-box text-gray-900 dark:text-volt"></i> Товары продавца
+        </h2>
+        {% if products.paginator.num_pages > 1 %}
+            <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                {{ products.number }} / {{ products.paginator.num_pages }}
+            </p>
+        {% endif %}
+    </div>
+
+    {% if products %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {% for product in products %}
+                <article class="bg-white dark:bg-panel border border-gray-200 dark:border-edge group hover:border-black dark:hover:border-volt">
+
+                    <a href="{{ product.get_absolute_url }}"
+                       class="block aspect-square bg-gray-50 dark:bg-void overflow-hidden">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                 loading="lazy">
+                        {% else %}
+                            <div class="w-full h-full flex items-center justify-center text-5xl text-gray-300 dark:text-gray-600">
+                                <i class="fas fa-image"></i>
+                            </div>
+                        {% endif %}
+                    </a>
+
+                    <div class="p-4">
+                        <a href="{{ product.get_absolute_url }}"
+                           class="block text-base font-bold text-gray-900 dark:text-white hover:text-black dark:hover:text-volt leading-snug line-clamp-2">
+                            {{ product.name }}
+                        </a>
+
+                        {% if product.category2nd %}
+                            <p class="mt-1 text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                                {{ product.category2nd.brand }}
+                            </p>
+                        {% endif %}
+
+                        <div class="mt-3 flex items-center justify-between">
+                            <span class="text-lg font-black font-mono text-gray-900 dark:text-white">
+                                {{ product.price }} ₽
+                            </span>
+                            {% if product.stock > 0 %}
+                                <span class="text-[10px] font-mono uppercase px-2 py-0.5 bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+                                    В наличии
+                                </span>
+                            {% else %}
+                                <span class="text-[10px] font-mono uppercase px-2 py-0.5 bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400">
+                                    Нет
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+
+        {# Пагинация #}
+        {% if products.paginator.num_pages > 1 %}
+        <nav class="flex items-center justify-center gap-2 mt-10 font-mono text-sm">
+            {% if products.has_previous %}
+                <a href="?tab=shop&page={{ products.previous_page_number }}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">←</a>
+            {% endif %}
+            {% for num in products.paginator.page_range %}
+                {% if num == products.number %}
+                    <span class="px-3 py-2 bg-volt text-black font-bold">{{ num }}</span>
+                {% elif num > products.number|add:"-3" and num < products.number|add:"3" %}
+                    <a href="?tab=shop&page={{ num }}"
+                       class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">{{ num }}</a>
+                {% elif num == 1 or num == products.paginator.num_pages %}
+                    <a href="?tab=shop&page={{ num }}"
+                       class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">{{ num }}</a>
+                {% elif num == products.number|add:"-3" or num == products.number|add:"3" %}
+                    <span class="px-2 text-gray-500">…</span>
+                {% endif %}
+            {% endfor %}
+            {% if products.has_next %}
+                <a href="?tab=shop&page={{ products.next_page_number }}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">→</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-16 bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge">
+            <i class="fas fa-box-open text-5xl text-gray-400 dark:text-gray-500 mb-4"></i>
+            <p class="text-sm text-gray-500 dark:text-gray-400">У продавца пока нет товаров.</p>
+        </div>
+    {% endif %}
+
+    {# ===== БЛОК: ОТВЕТЫ НА ОТЗЫВЫ ===== #}
+    {% if sellers %}
+        <div class="mt-14 mb-6 flex items-end justify-between gap-4 border-t border-gray-200 dark:border-edge pt-10">
+            <h2 class="text-2xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+                <i class="fas fa-comment-dots text-gray-900 dark:text-volt"></i> Ответы на отзывы
+            </h2>
+        </div>
+
+        <div class="space-y-3">
+            {% for item in sellers %}
+                {% if item.url %}
+                <a href="{{ item.url }}"
+                   class="block bg-white dark:bg-panel border border-gray-200 dark:border-edge p-5 hover:border-black dark:hover:border-volt transition-colors">
+
+                    <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-2">
+                        <i class="fas fa-box mr-1"></i>
+                        {{ item.reply.review.product.name }}
+                    </p>
+
+                    <p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">
+                        {{ item.reply.text }}
+                    </p>
+
+                    <p class="mt-3 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                        {{ item.reply.created_at|date:"d.m.Y H:i" }}
+                    </p>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {# ===== КНОПКА НАЗАД ===== #}
+    <div class="mt-10 pt-6 border-t border-gray-200 dark:border-edge">
+        <a href="{% url 'shop:product_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-edge text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt">
+            <i class="fas fa-arrow-left"></i> Все товары
+        </a>
+    </div>
+
 </div>
+
+{# ===== JS: ЛАЙК / ПОДПИСКА ===== #}
+<script>
+(function() {
+    const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+    function setupToggle(btnId, countId, activeClasses, inactiveClasses, activeKey) {
+        const btn = document.getElementById(btnId);
+        const countEl = document.getElementById(countId);
+        if (!btn || !countEl) return;
+
+        btn.addEventListener('click', async function() {
+            const wasActive = btn.classList.contains(activeClasses[0]);
+            const current = parseInt(countEl.textContent, 10) || 0;
+
+            if (wasActive) {
+                inactiveClasses.forEach(c => btn.classList.add(c));
+                activeClasses.forEach(c => btn.classList.remove(c));
+                countEl.textContent = Math.max(0, current - 1);
+            } else {
+                activeClasses.forEach(c => btn.classList.add(c));
+                inactiveClasses.forEach(c => btn.classList.remove(c));
+                countEl.textContent = current + 1;
+            }
+
+            try {
+                const res = await fetch(btn.dataset.url, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrf },
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                const data = await res.json();
+                const serverCount = data.likes_count ?? data.subscribers_count;
+                if (serverCount !== undefined) countEl.textContent = serverCount;
+
+                const isActive = data[activeKey];
+                if (isActive) {
+                    activeClasses.forEach(c => btn.classList.add(c));
+                    inactiveClasses.forEach(c => btn.classList.remove(c));
+                } else {
+                    inactiveClasses.forEach(c => btn.classList.add(c));
+                    activeClasses.forEach(c => btn.classList.remove(c));
+                }
+            } catch (e) {
+                console.error('toggle error', e);
+                countEl.textContent = current;
+            }
+        });
+    }
+
+    setupToggle('likeBtn', 'likesCount',
+        ['bg-volt', 'text-black', 'border-volt'],
+        ['border-gray-300', 'dark:border-edge', 'text-gray-700', 'dark:text-gray-300', 'hover:border-black', 'dark:hover:border-volt'],
+        'liked'
+    );
+
+    setupToggle('subscribeBtn', 'subscribersCount',
+        ['bg-volt', 'text-black', 'border-volt'],
+        ['border-gray-300', 'dark:border-edge', 'text-gray-700', 'dark:text-gray-300', 'hover:border-black', 'dark:hover:border-volt'],
+        'subscribed'
+    );
+})();
+</script>
 {% endblock %}

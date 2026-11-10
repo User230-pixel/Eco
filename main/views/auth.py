@@ -26,7 +26,7 @@ from settings_app.views.verify import (
     send_verification_code_to_phone
 )
 
-from .views import guest_only, rate_limit, send_notifications
+from .views import guest_only, rate_limit, send_notifications, get_previous_app
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,11 @@ NOTIFY_COOLDOWN_HOUR = 3600
 NOTIFY_COOLDOWN_DAY = 86400
 FAILED_LOGIN_THRESHOLD = 3
 
+BASE_TEMPLATES = {
+    'shop': 'shop/base.html',
+    'main': 'main/base.html',
+    'blog': 'blog/base.html',
+}
 
 def _safe_redirect(request, url, fallback="/"):
     """Редирект только на свой хост, иначе fallback."""
@@ -52,10 +57,23 @@ def _safe_redirect(request, url, fallback="/"):
 
 @guest_only
 def get_login_form(request):
+    previous_app = get_previous_app(request)
+    
+    if previous_app == 'shop':
+        base_template = 'shop/base.html'
+    elif previous_app == 'main':
+        base_template = 'main/base.html'
+    elif previous_app == 'blog':
+        base_template = 'blog/base.html'
+    else:
+        base_template = 'main/base.html'
+
     if request.GET.get("next"):
         messages.error(request, "Доступ запрещен. Для просмотра этой страницы необходимо авторизоваться.")
 
-    context = {"login_form": LoginForm()}
+    context = {"login_form": LoginForm(),
+               "base_template": base_template,
+               }
 
     if request.headers.get("HX-Request"):
         return render(request, "main/partials/login_form.html", context)
@@ -65,7 +83,20 @@ def get_login_form(request):
 
 @guest_only
 def get_register_form(request):
-    context = {"register_form": SignUpForm()}
+    previous_app = get_previous_app(request)
+    
+    if previous_app == 'shop':
+        base_template = 'shop/base.html'
+    elif previous_app == 'main':
+        base_template = 'main/base.html'
+    elif previous_app == 'blog':
+        base_template = 'blog/base.html'
+    else:
+        base_template = 'main/base.html'
+
+    context = {"register_form": SignUpForm(),
+               "base_template": base_template,
+               }
 
     if request.headers.get("HX-Request"):
         return render(request, "main/partials/register_form.html", context)
@@ -180,17 +211,63 @@ def register_submit(request):
         return render(request, "main/partials/register_form.html", context)
     return render(request, "main/register.html", context)
 
+import time
+import threading
+from django.shortcuts import render, redirect
+from django.contrib.auth import login
+from django.db import transaction, IntegrityError
+from django.core.cache import cache
+from django.utils import timezone
+from django.http import HttpResponse
+from django.conf import settings
+
+# Предполагается, что эти константы импортируются или объявлены в вашем файле:
+# SMS_MAX_PER_HOUR, SMS_RESEND_INTERVAL, NOTIFY_COOLDOWN_HOUR
+
 @guest_only
 def verify_phone_page(request):
     user_data = request.session.get("verification_data")
-    if not user_data:
+    
+    # ЖЕСТКАЯ ЗАЩИТА: Проверяем наличие данных И флаг успешного подтверждения Email
+    if not user_data or not user_data.get("email_verified"):
         if request.headers.get("HX-Request"):
             response = HttpResponse()
             response["HX-Redirect"] = redirect("main:get_register_form").url
             return response
         return redirect("main:get_register_form")
 
-    sms_count_key = f"sms_sent_count_{user_data.get('phone_number', 'unknown')}"
+    # Уникальные ключи кэша
+    email_slug = user_data.get('email', 'unknown')
+    phone_slug = user_data.get('phone_number', 'unknown')
+    attempts_key = f"verify_phone_attempts_{email_slug}"
+    sms_count_key = f"sms_sent_count_{phone_slug}"
+
+    # 1. АТОМАРНЫЙ ИНКРЕМЕНТ И ПРОВЕРКА ПОПЫТОК НА САМОМ ВХОДЕ (Для POST)
+    if request.method == "POST":
+        try:
+            attempts = cache.incr(attempts_key)
+        except ValueError:
+            # Если ключа в кэше еще не было, incr падает. Инициализируем единицей на 5 минут (300 сек)
+            cache.set(attempts_key, 1, 300)
+            attempts = 1
+
+        if attempts > settings.MAX_VERIFICATION_ATTEMPTS:
+            error_message = "Слишком много неудачных попыток. Запросите код заново."
+            return render(request, "main/verify_phone.html", {
+                "verification_form": VerificationForm(request.POST),
+                "error_message": error_message,
+            })
+
+    # Для GET запроса просто проверяем, нет ли уже блокировки перебора
+    elif request.method == "GET":
+        if cache.get(attempts_key, 0) > settings.MAX_VERIFICATION_ATTEMPTS:
+            error_message = "Слишком много неудачных попыток. Запросите код заново."
+            return render(request, "main/verify_phone.html", {
+                "verification_form": VerificationForm(),
+                "error_message": error_message,
+            })
+
+    # 2. ЛОГИКА ОТПРАВКИ СМС (Только для GET запроса)
     sms_count = cache.get(sms_count_key, 0)
 
     if request.method == "GET":
@@ -209,23 +286,15 @@ def verify_phone_page(request):
                 user_data["phone_number"],
                 purpose="register",
             )
+            # Если ключа лимита СМС нет — создаем его, затем увеличиваем
             cache.add(sms_count_key, 0, NOTIFY_COOLDOWN_HOUR)
             cache.incr(sms_count_key)
             request.session["sms_sent_time"] = current_time
             request.session.modified = True
 
+    # 3. ОБРАБОТКА ВАЛИДАЦИИ ФОРМЫ (Для POST)
     form = VerificationForm(request.POST or None)
     error_message = None
-
-    attempts_key = f"verify_phone_attempts_{user_data.get('email', 'unknown')}"
-    attempts = cache.get(attempts_key, 0)
-
-    if attempts >= settings.MAX_VERIFICATION_ATTEMPTS:
-        error_message = "Слишком много неудачных попыток. Запросите код заново."
-        return render(request, "main/verify_phone.html", {
-            "verification_form": form,
-            "error_message": error_message,
-        })
 
     if request.method == "POST" and form.is_valid():
         previous_url = request.session.get("previous_url", "/")
@@ -241,6 +310,7 @@ def verify_phone_page(request):
                 ).first()
 
                 if verification and verification.check_code(input_code):
+                    # Код верный — создаем пользователя
                     user = CustomUser(
                         username=user_data["username"],
                         email=user_data["email"],
@@ -250,15 +320,20 @@ def verify_phone_page(request):
                     )
                     user.save()
 
+                    # Помечаем код использованным
                     verification.is_used = True
                     verification.save(update_fields=["is_used"])
+                    
+                    # Полностью очищаем кэш попыток брутфорса
                     cache.delete(attempts_key)
 
+                    # Асинхронная отправка email
                     threading.Thread(
                         target=_async_welcome_email,
                         args=(user.username, user.email),
                     ).start()
 
+                    # Очищаем сессию регистрации
                     request.session.pop("verification_data", None)
                     request.session.pop("sms_sent_time", None)
                     request.session.modified = True
@@ -279,12 +354,14 @@ def verify_phone_page(request):
                     return _safe_redirect(request, previous_url)
 
                 else:
-                    cache.add(attempts_key, 0, 300)
-                    attempts = cache.incr(attempts_key)
-                    if attempts >= settings.MAX_VERIFICATION_ATTEMPTS:
+                    # Код неверный. Счетчик attempts увеличился в самом начале функции,
+                    # поэтому здесь мы просто выводим текст ошибки.
+                    current_attempts = cache.get(attempts_key, 0)
+                    if current_attempts > settings.MAX_VERIFICATION_ATTEMPTS:
                         error_message = "Слишком много неудачных попыток. Запросите код заново."
                     else:
                         error_message = "Неверный или истекший код из СМС."
+
                     return render(request, "main/verify_phone.html", {
                         "verification_form": form,
                         "error_message": error_message,
@@ -301,3 +378,4 @@ def verify_phone_page(request):
         "verification_form": form,
         "error_message": error_message,
     })
+

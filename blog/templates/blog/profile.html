@@ -1,0 +1,282 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }} — Eco Blog{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    {# ===== ШАПКА ПРОФИЛЯ ===== #}
+    <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-6 sm:p-8 mb-6">
+        <div class="flex flex-col sm:flex-row items-start gap-6">
+
+            {% if profile_obj.avatar %}
+                <img src="{{ profile_obj.avatar.url }}" alt="{{ profile_user.username }}"
+                     class="w-24 h-24 sm:w-28 sm:h-28 object-cover border-2 border-gray-200 dark:border-edge shrink-0">
+            {% else %}
+                <div class="w-24 h-24 sm:w-28 sm:h-28 bg-volt text-black flex items-center justify-center font-black text-4xl sm:text-5xl shrink-0 select-none">
+                    {{ profile_user.username|first|upper }}
+                </div>
+            {% endif %}
+
+            <div class="flex-1 min-w-0">
+
+                {# Имя #}
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white leading-tight">
+                    {% if profile_user.first_name or profile_user.last_name %}
+                        {{ profile_user.first_name }} {{ profile_user.last_name }}
+                    {% else %}
+                        {{ profile_user.username }}
+                    {% endif %}
+                </h1>
+                <p class="text-sm font-mono text-gray-500 dark:text-gray-400 mt-1">@{{ profile_user.username }} · блогер</p>
+
+                {# Bio #}
+                {% if profile_obj.bio %}
+                    <p class="mt-4 text-sm text-gray-700 dark:text-gray-300 leading-relaxed max-w-2xl">{{ profile_obj.bio }}</p>
+                {% endif %}
+
+                {# Статистика — ВСЕМ #}
+                <div class="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                    <span><i class="fas fa-newspaper mr-1"></i><strong class="text-gray-900 dark:text-white">{{ posts_count }}</strong> постов</span>
+                    <span><i class="fas fa-comments mr-1"></i><strong class="text-gray-900 dark:text-white">{{ comments_count }}</strong> комментариев</span>
+                    <span><i class="fas fa-heart mr-1"></i><strong class="text-gray-900 dark:text-white">{{ profile_obj.likes_count }}</strong> лайков</span>
+                    <span><i class="fas fa-users mr-1"></i><strong class="text-gray-900 dark:text-white">{{ profile_obj.subscribers_count }}</strong> подписчиков</span>
+                    <span><i class="fas fa-calendar mr-1"></i>с {{ profile_user.date_joined|date:"d.m.Y" }}</span>
+                </div>
+
+                {# Кнопки: владельцу — редактировать, остальным — лайк/подписка #}
+                <div class="mt-5 flex flex-wrap gap-2">
+                    {% if is_owner %}
+                        <a href="{% url 'blog:cabinet_edit' %}"
+                           class="inline-flex items-center gap-2 px-4 py-2 bg-volt text-black text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                            <i class="fas fa-pen"></i> Редактировать
+                        </a>
+                        <a href="{% url 'blog:cabinet' %}"
+                           class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                            <i class="fas fa-cog"></i> Кабинет
+                        </a>
+                    {% elif request.user.is_authenticated %}
+                        <button type="button"
+                                id="likeBtn"
+                                data-url="{% url 'main:toggle_profile_like' profile_user.pk %}"
+                                class="flex items-center gap-2 px-4 py-2.5 border text-sm font-bold transition-colors
+                                    {% if user_has_liked %}bg-volt text-black border-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}">
+                            <i class="fas fa-heart"></i>
+                            <span id="likesCount">{{ profile_obj.likes_count }}</span>
+                        </button>
+
+                        <button type="button"
+                                id="subscribeBtn"
+                                data-url="{% url 'main:toggle_subscription' profile_user.pk %}"
+                                class="flex items-center gap-2 px-4 py-2.5 border text-sm font-bold transition-colors
+                                    {% if user_is_subscribed %}bg-volt text-black border-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}">
+                            <i class="fas fa-user-plus"></i>
+                            <span id="subscribersCount">{{ profile_obj.subscribers_count }}</span>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== НАВИГАЦИЯ ПО ТАБАМ ===== #}
+    <nav class="flex gap-0 border-b border-gray-200 dark:border-edge mb-8">
+
+        <a href="{% url 'blog:profile' profile_user.pk %}?tab=blog"
+           class="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-widest border-b-2
+                  {% if active_tab == 'blog' or not active_tab %}border-volt text-gray-900 dark:text-volt{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-volt{% endif %}">
+            <i class="fas fa-newspaper"></i> Блог
+        </a>
+        <a href="{% url 'shop:profile' profile_user.pk %}?tab=shop"
+           class="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold uppercase tracking-widest border-b-2
+                  {% if active_tab == 'shop' %}border-volt text-gray-900 dark:text-volt{% else %}border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-volt{% endif %}">
+            <i class="fas fa-store"></i> Магазин
+        </a>
+    </nav>
+
+    {# ===== БЛОК: БЛОГ ===== #}
+    {% if active_tab == 'blog' or not active_tab %}
+
+        {# Посты #}
+        <div class="mb-6 flex items-end justify-between gap-4">
+            <h2 class="text-2xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+                <i class="fas fa-newspaper text-gray-900 dark:text-volt"></i> Посты автора
+            </h2>
+            {% if posts.paginator.num_pages > 1 %}
+                <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">{{ posts.number }} / {{ posts.paginator.num_pages }}</p>
+            {% endif %}
+        </div>
+
+        <div class="space-y-3">
+            {% include 'blog/partials/_post_list.html' with empty_message="У этого автора пока нет постов." %}
+        </div>
+
+        {% if posts.paginator.num_pages > 1 %}
+        <nav class="flex items-center justify-center gap-2 mt-10 font-mono text-sm">
+            {% if posts.has_previous %}
+                <a href="?tab=blog&page={{ posts.previous_page_number }}{% if request.GET.c_page %}&c_page={{ request.GET.c_page }}{% endif %}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">←</a>
+            {% endif %}
+            {% for num in posts.paginator.page_range %}
+                {% if num == posts.number %}
+                    <span class="px-3 py-2 bg-volt text-black font-bold">{{ num }}</span>
+                {% elif num > posts.number|add:"-3" and num < posts.number|add:"3" %}
+                    <a href="?tab=blog&page={{ num }}{% if request.GET.c_page %}&c_page={{ request.GET.c_page }}{% endif %}"
+                       class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">{{ num }}</a>
+                {% elif num == 1 or num == posts.paginator.num_pages %}
+                    <a href="?tab=blog&page={{ num }}{% if request.GET.c_page %}&c_page={{ request.GET.c_page }}{% endif %}"
+                       class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">{{ num }}</a>
+                {% elif num == posts.number|add:"-3" or num == posts.number|add:"3" %}
+                    <span class="px-2 text-gray-500">…</span>
+                {% endif %}
+            {% endfor %}
+            {% if posts.has_next %}
+                <a href="?tab=blog&page={{ posts.next_page_number }}{% if request.GET.c_page %}&c_page={{ request.GET.c_page }}{% endif %}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">→</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+        {# Комментарии #}
+        <div class="mt-14 mb-6 flex items-end justify-between gap-4 border-t border-gray-200 dark:border-edge pt-10">
+            <h2 class="text-2xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+                <i class="fas fa-comments text-gray-900 dark:text-volt"></i> Комментарии автора
+            </h2>
+            {% if comments.paginator.num_pages > 1 %}
+                <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">{{ comments.number }} / {{ comments.paginator.num_pages }}</p>
+            {% endif %}
+        </div>
+
+        <div class="space-y-4">
+            {% for comment in comments %}
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-4">
+                    <div class="flex items-center justify-between gap-4 mb-2">
+                        <span class="text-xs font-mono text-gray-500 dark:text-gray-400">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                        {% if comment.post %}
+                            <a href="{{ comment.post.get_absolute_url }}" class="text-xs font-bold text-volt uppercase tracking-wider hover:underline">
+                                К посту: {{ comment.post.title|truncatechars:30 }}
+                            </a>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-800 dark:text-gray-200 leading-relaxed">{{ comment.text }}</p>
+                </div>
+            {% empty %}
+                <p class="text-sm italic text-gray-500 dark:text-gray-400">Этот автор пока не оставил ни одного комментария.</p>
+            {% endfor %}
+        </div>
+
+        {% if comments.paginator.num_pages > 1 %}
+        <nav class="flex items-center justify-center gap-2 mt-10 font-mono text-sm">
+            {% if comments.has_previous %}
+                <a href="?tab=blog&c_page={{ comments.previous_page_number }}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">←</a>
+            {% endif %}
+            {% for num in comments.paginator.page_range %}
+                {% if num == comments.number %}
+                    <span class="px-3 py-2 bg-volt text-black font-bold">{{ num }}</span>
+                {% elif num > comments.number|add:"-3" and num < comments.number|add:"3" %}
+                    <a href="?tab=blog&c_page={{ num }}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}"
+                       class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">{{ num }}</a>
+                {% elif num == 1 or num == comments.paginator.num_pages %}
+                    <a href="?tab=blog&c_page={{ num }}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}"
+                       class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">{{ num }}</a>
+                {% elif num == comments.number|add:"-3" or num == comments.number|add:"3" %}
+                    <span class="px-2 text-gray-500">…</span>
+                {% endif %}
+            {% endfor %}
+            {% if comments.has_next %}
+                <a href="?tab=blog&c_page={{ comments.next_page_number }}{% if request.GET.page %}&page={{ request.GET.page }}{% endif %}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">→</a>
+            {% endif %}
+        </nav>
+        {% endif %}
+
+    {% endif %}
+
+    {# ===== БЛОК: МАГАЗИН (ссылка на shop-профиль) ===== #}
+    {% if active_tab == 'shop' %}
+        <div class="text-center py-12 bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge">
+            <i class="fas fa-store text-5xl text-gray-400 dark:text-gray-500 mb-4"></i>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Товары продавца — в магазине</p>
+            <a href="{% url 'shop:profile' profile_user.pk %}"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white">
+                <i class="fas fa-store"></i> Перейти в магазин
+            </a>
+        </div>
+    {% endif %}
+
+    {# ===== КНОПКА НАЗАД ===== #}
+    <div class="mt-10 pt-6 border-t border-gray-200 dark:border-edge">
+        <a href="{% url 'blog:post_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-edge text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+            <i class="fas fa-arrow-left"></i> Все посты
+        </a>
+    </div>
+
+</div>
+
+{# ===== JS: ЛАЙК / ПОДПИСКА ===== #}
+<script>
+(function() {
+    const csrf = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+    function setupToggle(btnId, countId, activeClasses, inactiveClasses, activeKey) {
+        const btn = document.getElementById(btnId);
+        const countEl = document.getElementById(countId);
+        if (!btn || !countEl) return;
+
+        btn.addEventListener('click', async function() {
+            const wasActive = btn.classList.contains(activeClasses[0]);
+            const current = parseInt(countEl.textContent, 10) || 0;
+
+            if (wasActive) {
+                inactiveClasses.forEach(c => btn.classList.add(c));
+                activeClasses.forEach(c => btn.classList.remove(c));
+                countEl.textContent = Math.max(0, current - 1);
+            } else {
+                activeClasses.forEach(c => btn.classList.add(c));
+                inactiveClasses.forEach(c => btn.classList.remove(c));
+                countEl.textContent = current + 1;
+            }
+
+            try {
+                const res = await fetch(btn.dataset.url, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrf },
+                });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+
+                const data = await res.json();
+                const serverCount = data.likes_count ?? data.subscribers_count;
+                if (serverCount !== undefined) countEl.textContent = serverCount;
+
+                const isActive = data[activeKey];
+                if (isActive) {
+                    activeClasses.forEach(c => btn.classList.add(c));
+                    inactiveClasses.forEach(c => btn.classList.remove(c));
+                } else {
+                    inactiveClasses.forEach(c => btn.classList.add(c));
+                    activeClasses.forEach(c => btn.classList.remove(c));
+                }
+            } catch (e) {
+                console.error('toggle error', e);
+                countEl.textContent = current;
+            }
+        });
+    }
+
+    setupToggle('likeBtn', 'likesCount',
+        ['bg-volt', 'text-black', 'border-volt'],
+        ['border-gray-300', 'dark:border-edge', 'text-gray-700', 'dark:text-gray-300', 'hover:border-black', 'dark:hover:border-volt'],
+        'liked'
+    );
+
+    setupToggle('subscribeBtn', 'subscribersCount',
+        ['bg-volt', 'text-black', 'border-volt'],
+        ['border-gray-300', 'dark:border-edge', 'text-gray-700', 'dark:text-gray-300', 'hover:border-black', 'dark:hover:border-volt'],
+        'subscribed'
+    );
+})();
+</script>
+{% endblock %}

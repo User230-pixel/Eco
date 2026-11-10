@@ -2,10 +2,11 @@ from django.contrib import messages
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.decorators.http import require_POST
-
+from django.urls import reverse, NoReverseMatch
 from shop.models import Order
+from django.db import transaction
 
-from main.views.views import driver_required
+from main.views.views import driver_required, send_notifications
 
 
 DRIVER_ALLOWED_TRANSITIONS = {
@@ -13,6 +14,25 @@ DRIVER_ALLOWED_TRANSITIONS = {
     "processing": ["shipped"],
     "shipped":    ["delivered"],
 }
+
+STATUS_NOTIFICATIONS = {
+    "shipped": {
+        "title": "Заказ отправлен",
+        "message": "Ваш заказ №{order_id} передан в доставку.",
+        "notification_type": "info",
+    },
+    "delivered": {
+        "title": "Заказ доставлен",
+        "message": "Ваш заказ №{order_id} успешно доставлен. Спасибо!",
+        "notification_type": "success",
+    },
+}
+
+def _get_order_url(order):
+    try:
+        return reverse("shop:order_detail", args=[order.id])
+    except NoReverseMatch:
+        return ""
 
 
 @driver_required
@@ -41,8 +61,19 @@ def driver_update_order_status(request, order_id):
         )
         return redirect("main:driver_orders")
 
-    order.status = new_status
-    order.save(update_fields=["status"])
+    with transaction.atomic():
+        order.status = new_status
+        order.save(update_fields=["status"])
+        notif = STATUS_NOTIFICATIONS.get(new_status)
+
+        if notif:
+            transaction.on_commit(lambda: send_notifications(
+                user=order.user,
+                title=notif["title"],
+                message=notif["message"].format(order_id=order.id),
+                notification_type=notif["notification_type"],
+                url=_get_order_url(order),
+            ))
 
     if request.headers.get("HX-Request"):
         return render(request, "main/partials/_driver_order_row.html", {

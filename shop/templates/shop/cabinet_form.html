@@ -2,7 +2,7 @@
 
 <!-- ФОРМА -->
 <form id="profile-main-form"
-      hx-post="{% url 'shop:profile_update' %}"
+      hx-post="{% url 'shop:cabinet_update' %}"
       hx-target="#profile-form-container"
       hx-swap="innerHTML"
       enctype="multipart/form-data"
@@ -85,6 +85,16 @@
 
                     <div id="address-status" class="mt-1 text-xs text-gray-500 dark:text-gray-400"></div>
                 </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'blog:cabinet_edit' %}"
+                    class="px-4 py-2 bg-volt text-black text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                        <i class="fas fa-pen"></i> Изменить
+                    </a>
+                    <a href="{% url 'shop:profile' request.user.pk %}"
+                    class="px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                        <i class="fas fa-eye"></i> Профиль
+                    </a>
+                </div>
             </div>
 
             <!-- Контакты -->
@@ -147,66 +157,109 @@
                         <i class="fas fa-history text-gray-900 dark:text-volt"></i> История покупок
                     </h3>
                     <span class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
-                        Все заказы ({{ counter|default:0 }})
+                        Все заказы ({{ orders.paginator.count|default:counter|default:0 }})
                     </span>
                 </div>
 
-                {% if orders %}
-                    <div class="space-y-4">
-                    {% for order in orders %}
-                        <div class="order-item flex gap-4 pb-4 border-b border-gray-200 dark:border-edge last:border-0 last:pb-0">
-                            <div class="w-12 h-12 bg-white dark:bg-void border border-gray-200 dark:border-edge flex items-center justify-center text-2xl shrink-0">
-                                {% with first_item=order.items.all.0 %}
-                                    {% if first_item.product.category.name == 'Ноутбуки' or first_item.product.category.name == 'ПК' %}💻
-                                    {% elif first_item.product.category.name == 'Смартфоны' %}📱
-                                    {% elif first_item.product.category.name == 'Планшеты' %}📟
-                                    {% else %}📦{% endif %}
-                                {% endwith %}
-                            </div>
-
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-start justify-between gap-3">
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white leading-snug">
-                                        {% for item in order.items.all %}
-                                            {{ item.product.name }}
-                                            <span class="text-gray-500 dark:text-gray-400">({{ item.quantity }} шт.)</span>
-                                            {% if not forloop.last %}, {% endif %}
-                                        {% empty %}
-                                            Товар удален из каталога
-                                        {% endfor %}
-                                    </span>
-                                    <span class="text-sm font-black font-mono text-gray-900 dark:text-white whitespace-nowrap">
-                                        {{ order.total_price|floatformat:"0" }} ₽
-                                    </span>
+                <div id="orders-container">
+                    {% if orders %}
+                        <div class="space-y-4">
+                        {% for order in orders %}
+                            <div class="order-item flex gap-4 pb-4 border-b border-gray-200 dark:border-edge last:border-0 last:pb-0">
+                                <div class="w-12 h-12 bg-white dark:bg-void border border-gray-200 dark:border-edge flex items-center justify-center text-2xl shrink-0">
+                                    {% with first_item=order.items.all.0 %}
+                                        {% if first_item.product.category.name == 'Ноутбуки' or first_item.product.category.name == 'ПК' %}💻
+                                        {% elif first_item.product.category.name == 'Смартфоны' %}📱
+                                        {% elif first_item.product.category.name == 'Планшеты' %}📟
+                                        {% else %}📦{% endif %}
+                                    {% endwith %}
                                 </div>
 
-                                <p class="mt-1 text-[11px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
-                                    Заказ №{{ order.id }} • {{ order.created_at|date:"d b Y в H:i" }}
-                                </p>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <span class="text-sm font-medium text-gray-900 dark:text-white leading-snug">
+                                            {% for item in order.items.all %}
+                                                {{ item.product.name }}
+                                                <span class="text-gray-500 dark:text-gray-400">({{ item.quantity }} шт.)</span>
+                                                {% if not forloop.last %}, {% endif %}
+                                            {% empty %}
+                                                Товар удален из каталога
+                                            {% endfor %}
+                                        </span>
+                                        <span class="text-sm font-black font-mono text-gray-900 dark:text-white whitespace-nowrap">
+                                            {{ order.total_price|floatformat:"0" }} ₽
+                                        </span>
+                                    </div>
 
-                                <span class="inline-block mt-2 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border
-                                    {% if order.status == 'pending' %}border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400
-                                    {% elif order.status == 'succeeded' %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt
-                                    {% elif order.status == 'shipped' %}border-volt text-gray-900 dark:text-volt
-                                    {% elif order.status == 'delivered' %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt
-                                    {% elif order.status == 'canceled' %}border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400
-                                    {% else %}border-gray-300 dark:border-edge text-gray-500 dark:text-gray-400{% endif %}">
-                                    {% if order.status == 'pending' %}Оформлен
-                                    {% elif order.status == 'succeeded' %}Оплачен
-                                    {% elif order.status == 'shipped' %}В пути
-                                    {% elif order.status == 'delivered' %}Доставлен
-                                    {% elif order.status == 'canceled' %}Отменён
-                                    {% else %}{{ order.status|default:"Неизвестно" }}{% endif %}
-                                </span>
+                                    <p class="mt-1 text-[11px] font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                                        Заказ №{{ order.id }} • {{ order.created_at|date:"d b Y в H:i" }}
+                                    </p>
+
+                                    <span class="inline-block mt-2 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border
+                                        {% if order.status == 'pending' %}border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400
+                                        {% elif order.status == 'succeeded' %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt
+                                        {% elif order.status == 'shipped' %}border-volt text-gray-900 dark:text-volt
+                                        {% elif order.status == 'delivered' %}border-volt/40 bg-volt/10 text-gray-900 dark:text-volt
+                                        {% elif order.status == 'canceled' %}border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400
+                                        {% else %}border-gray-300 dark:border-edge text-gray-500 dark:text-gray-400{% endif %}">
+                                        {% if order.status == 'pending' %}Оформлен
+                                        {% elif order.status == 'succeeded' %}Оплачен
+                                        {% elif order.status == 'shipped' %}В пути
+                                        {% elif order.status == 'delivered' %}Доставлен
+                                        {% elif order.status == 'canceled' %}Отменён
+                                        {% else %}{{ order.status|default:"Неизвестно" }}{% endif %}
+                                    </span>
+                                </div>
                             </div>
+                        {% endfor %}
                         </div>
-                    {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="text-center py-6">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">У вас пока нет совершённых заказов.</p>
-                    </div>
-                {% endif %}
+
+                        {% if orders.paginator.num_pages > 1 %}
+                        <nav class="mt-6 pt-4 border-t border-gray-200 dark:border-edge flex items-center justify-between gap-3"
+                            aria-label="Пагинация заказов">
+                            {% if orders.has_previous %}
+                                <a href="?page={{ orders.previous_page_number }}"
+                                hx-get="?page={{ orders.previous_page_number }}"
+                                hx-target="#orders-container"
+                                hx-select="#orders-container"
+                                hx-swap="innerHTML"
+                                hx-push-url="true"
+                                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                                    <i class="fas fa-arrow-left"></i> Назад
+                                </a>
+                            {% else %}
+                                <span class="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase tracking-widest border border-gray-200 dark:border-edge text-gray-400 dark:text-gray-600 opacity-50 cursor-not-allowed">
+                                    <i class="fas fa-arrow-left"></i> Назад
+                                </span>
+                            {% endif %}
+
+                            <span class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                                {{ orders.number }} / {{ orders.paginator.num_pages }}
+                            </span>
+
+                            {% if orders.has_next %}
+                                <a href="?page={{ orders.next_page_number }}"
+                                hx-get="?page={{ orders.next_page_number }}"
+                                hx-target="#orders-container"
+                                hx-select="#orders-container"
+                                hx-swap="innerHTML"
+                                hx-push-url="true"
+                                class="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase tracking-widest border border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                                    Вперёд <i class="fas fa-arrow-right"></i>
+                                </a>
+                            {% else %}
+                                <span class="inline-flex items-center gap-2 px-4 py-2 text-xs font-mono uppercase tracking-widest border border-gray-200 dark:border-edge text-gray-400 dark:text-gray-600 opacity-50 cursor-not-allowed">
+                                    Вперёд <i class="fas fa-arrow-right"></i>
+                                </span>
+                            {% endif %}
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-6">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">У вас пока нет совершённых заказов.</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>

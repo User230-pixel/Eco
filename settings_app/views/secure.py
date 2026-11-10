@@ -520,14 +520,12 @@ def resend_email_code(request):
 @require_POST
 def logout_all(request):
     user = request.user
-    
     try:
         user.password = make_password(get_random_string(32))
         user.save()
-        
         update_session_auth_hash(request, user)
-        
         messages.success(request, "Вы успешно вышли со всех остальных устройств.")
+
     except Exception:
         messages.error(request, "Произошла ошибка при выходе с устройств. Попробуйте позже.")
         
@@ -537,16 +535,12 @@ def logout_all(request):
 @require_POST
 def delete_account(request):
     user = request.user
-    
     try:
-
         logout(request)
-
         user.delete()
-        
         messages.success(request, "Ваш аккаунт был успешно и безвозвратно удален.")
         return redirect("main:login_submit")
-        
+    
     except Exception:
         messages.error(request, "Не удалось удалить аккаунт. Обратитесь в поддержку.")
         return redirect("main:cabinet")

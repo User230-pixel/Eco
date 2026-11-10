@@ -1,0 +1,28 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}#{{ tag.name }} — Eco Blog{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <div class="mb-8">
+        <a href="{% url 'blog:tag_list' %}"
+           class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-volt mb-4">
+            <i class="fas fa-arrow-left"></i> Все теги
+        </a>
+
+        <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+            <i class="fas fa-hashtag text-gray-900 dark:text-volt"></i> {{ tag.name }}
+        </h1>
+        <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mt-2">
+            Постов: {{ posts|length }}
+        </p>
+    </div>
+
+    <div id="post-container">
+        {% include 'blog/partials/_post_list.html' with empty_message="С этим тегом пока нет постов." %}
+    </div>
+
+</div>
+{% endblock %}

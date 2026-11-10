@@ -1,0 +1,44 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Теги — Eco Blog{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <div class="mb-8">
+        <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase flex items-center gap-3 text-gray-900 dark:text-white">
+            <i class="fas fa-tags text-gray-900 dark:text-volt"></i> Теги
+        </h1>
+        <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mt-2">
+            Всего: {{ tags|length }}
+        </p>
+    </div>
+
+    {% if tags %}
+        <div class="flex flex-wrap gap-3">
+            {% for tag in tags %}
+                <a href="{{ tag.get_absolute_url }}"
+                   class="group inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-panel border border-gray-200 dark:border-edge hover:border-black dark:hover:border-volt transition-colors">
+                    <span class="text-sm font-mono text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-volt">
+                        #{{ tag.name }}
+                    </span>
+                    {% if tag.posts.count %}
+                        <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 bg-gray-100 dark:bg-edge text-gray-500 dark:text-gray-400 group-hover:bg-volt group-hover:text-black">
+                            {{ tag.posts.count }}
+                        </span>
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="py-16 text-center">
+            <div class="text-5xl mb-4 text-gray-400 dark:text-gray-500">
+                <i class="fas fa-tags"></i>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Пока нет тегов.</p>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

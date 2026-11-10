@@ -9,8 +9,6 @@ from django.utils import timezone
 from .views import moderator_required
 from django.http import HttpResponseForbidden
 
-User = get_user_model()
-
 logger = logging.getLogger(__name__)
 
 User = get_user_model()

@@ -6,7 +6,7 @@
 {% endif %}
 
 <!-- ===================== ФОРМА ПОДТВЕРЖДЕНИЯ ===================== -->
-<form hx-post="{% url "settings_app:verify_phone_page" %}" hx-target="#verify-form-container"
+<form hx-post="{% url "main:verify_phone_page" %}" hx-target="#verify-form-container"
       hx-select="#verify-form-container"
       id="verify-form">
     {% csrf_token %}

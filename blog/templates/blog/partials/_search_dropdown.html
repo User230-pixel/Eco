@@ -1,0 +1,32 @@
+{% if has_results %}
+    <div class="p-3">
+        {% if results.posts %}
+            <h4 class="text-xs font-mono uppercase tracking-widest text-gray-500 mb-2">Посты</h4>
+            {% for post in results.posts %}
+                <a href="{{ post.get_absolute_url }}" class="block px-2 py-1 hover:bg-gray-100 dark:hover:bg-edge text-sm">
+                    {{ post.title }}
+                </a>
+            {% endfor %}
+        {% endif %}
+
+        {% if results.categories %}
+            <h4 class="text-xs font-mono uppercase tracking-widest text-gray-500 mt-3 mb-2">Категории</h4>
+            {% for cat in results.categories %}
+                <a href="{{ cat.get_absolute_url }}" class="block px-2 py-1 hover:bg-gray-100 dark:hover:bg-edge text-sm">
+                    {{ cat.name }}
+                </a>
+            {% endfor %}
+        {% endif %}
+
+        {% if results.tags %}
+            <h4 class="text-xs font-mono uppercase tracking-widest text-gray-500 mt-3 mb-2">Теги</h4>
+            {% for tag in results.tags %}
+                <a href="{{ tag.get_absolute_url }}" class="block px-2 py-1 hover:bg-gray-100 dark:hover:bg-edge text-sm">
+                    #{{ tag.name }}
+                </a>
+            {% endfor %}
+        {% endif %}
+    </div>
+{% else %}
+    <p class="p-3 text-sm text-gray-500 dark:text-gray-400">Ничего не найдено.</p>
+{% endif %}

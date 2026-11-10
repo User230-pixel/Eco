@@ -16,18 +16,17 @@
                 <span class="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-widest">AliEco · 2033</span>
             </div>
             <h1 class="text-5xl md:text-7xl font-black leading-[1.05] tracking-tight text-gray-900 dark:text-white">
-                Добро пожаловать<br>в AliEco
+                Добро пожаловать<br>в AliEco (Главная)
             </h1>
             <p class="mt-6 text-lg text-gray-600 dark:text-gray-400 leading-relaxed max-w-xl">
-                Мы — команда профессионалов, которая создаёт качественные
-                решения для бизнеса и повседневной жизни.
+                Общие функции, Навигация по приложениям, Найти себе роль
             </p>
 
             <div class="mt-10 flex flex-wrap gap-3">
                 <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
                     <i class="fas fa-arrow-right"></i> Перейти в магазин
                 </a>
-                <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                <a href="{% url 'blog:dashboard' %}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
                     <i class="fas fa-arrow-right"></i> Перейти в блог
                 </a>
                 <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-6 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
@@ -56,7 +55,7 @@
                     </a>
                     {% endif %}
                     {% if user.role_blogger or user.is_superuser %}
-                    <a href="{% url 'shop:product_list' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-panel border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                    <a href="{% url 'blog:add_post' %}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 dark:bg-panel border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
                         <i class="fas fa-arrow-right"></i> Меню блогера
                     </a>
                     {% endif %}

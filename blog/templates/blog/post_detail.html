@@ -1,0 +1,119 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}{{ post.title }} — Eco Blog{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-10">
+
+    {# ===== СТАТЬЯ ===== #}
+    <article class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-6 sm:p-8">
+
+        <h1 class="text-3xl md:text-4xl font-black leading-tight text-gray-900 dark:text-white">
+            {{ post.title }}
+        </h1>
+
+        <div class="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+            <span>{{ post.created_at|date:"d.m.Y" }}</span>
+            {% if post.category %}
+                <span>·</span>
+                <a href="{{ post.category.get_absolute_url }}" class="hover:text-black dark:hover:text-volt">
+                    {{ post.category.name }}
+                </a>
+            {% endif %}
+            <span>·</span>
+            <span>{{ post.author.username }}</span>
+        </div>
+
+        {% if post.image %}
+            <div class="mt-6 -mx-6 sm:-mx-8">
+                <img src="{{ post.image.url }}" alt="{{ post.title }}" class="w-full max-h-[500px] object-cover">
+            </div>
+        {% endif %}
+
+        <div class="mt-6 prose prose-lg dark:prose-invert max-w-none text-gray-800 dark:text-gray-200">
+            {{ post.text|linebreaks }}
+        </div>
+
+        {% with post.tags.all as tag_list %}
+            {% if tag_list %}
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-edge flex flex-wrap gap-2">
+                    {% for tag in tag_list %}
+                        <a href="{{ tag.get_absolute_url }}"
+                           class="text-xs font-mono uppercase tracking-wider bg-gray-100 dark:bg-edge text-gray-700 dark:text-gray-300 px-3 py-1.5 hover:bg-volt hover:text-black">
+                            #{{ tag.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-edge">
+            <a href="{% url 'blog:post_list' %}"
+               class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-edge text-sm font-bold text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                <i class="fas fa-arrow-left"></i> Все посты
+            </a>
+        </div>
+    </article>
+
+    {# ===== КОММЕНТАРИИ ===== #}
+    <section class="mt-12" id="comments">
+        <h2 class="text-2xl font-black tracking-tighter uppercase mb-6 text-gray-900 dark:text-white flex items-center gap-3">
+            <i class="fas fa-comments text-gray-900 dark:text-volt"></i>
+            Комментарии
+            <span class="text-sm font-mono text-gray-500 dark:text-gray-400">({{ comments_total|default:0 }})</span>
+        </h2>
+
+        {# Форма нового комментария #}
+        {% if request.user.is_authenticated %}
+            <div class="mb-8">
+                {% include 'blog/partials/_comment_form.html' with post=post %}
+            </div>
+        {% else %}
+            <div class="mb-8 p-4 bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <a href="{% url 'main:get_login_form' %}?next={{ request.path }}"
+                       class="text-gray-900 dark:text-volt font-bold hover:underline">
+                        Войдите
+                    </a>, чтобы оставить комментарий.
+                </p>
+            </div>
+        {% endif %}
+
+        {# Список комментариев #}
+        <div id="comments-list" class="space-y-3">
+            {% for comment in comments %}
+                {% include 'blog/partials/_comment.html' with comment=comment %}
+            {% empty %}
+                <p class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-comment-slash text-3xl block mb-2"></i>
+                    Пока нет комментариев. Будьте первым!
+                </p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {# ===== ПОХОЖИЕ ПОСТЫ ===== #}
+    {% if similar_posts %}
+        <section class="mt-12">
+            <h2 class="text-2xl font-black tracking-tighter uppercase mb-6 text-gray-900 dark:text-white">
+                <i class="fas fa-layer-group text-gray-900 dark:text-volt mr-2"></i> Похожие посты
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                {% for p in similar_posts %}
+                <article class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-4 hover:border-black dark:hover:border-volt">
+                    <a href="{{ p.get_absolute_url }}"
+                       class="block text-base font-semibold text-gray-900 dark:text-white hover:text-black dark:hover:text-volt leading-snug">
+                        {{ p.title }}
+                    </a>
+                    <p class="mt-2 text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                        {{ p.created_at|date:"d.m.Y" }}
+                    </p>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+</div>
+{% endblock %}

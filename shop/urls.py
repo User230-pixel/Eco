@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (cart, payments, products, reviews, search_, views, profile, add_products, favorites)
+from .views import (cart, payments, products, profile_and_cabinet, reviews, search_, views, add_products, favorites)
 from main.views import (auth)
 from main.views.views import shopper_required
 
@@ -36,8 +36,9 @@ urlpatterns = [
     path("search/htmx/", search_.global_search_htmx, name="global_search_htmx"),
     path("search/", search_.search_results, name="search_results"),
 
-    path("profile/", profile.profile_view, name="profile"),
-    path("profile/update/", profile.profile_update, name="profile_update"),
+    path("cabinet/", profile_and_cabinet.cabinet_view, name="cabinet"),
+    path("cabinet/update/", profile_and_cabinet.cabinet_update, name="cabinet_update"),
+    path("profiles/<int:pk>/", profile_and_cabinet.profile, name="profile"),
 
     path("product/<int:id>/<str:slug>/review/", reviews.add_review_htmx, name="add_review"),
     path(

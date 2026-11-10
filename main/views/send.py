@@ -151,59 +151,83 @@ def verify_code_page(request):
             return response
         return redirect("main:get_register_form")
 
-    form = VerificationForm(request.POST or None)
-    error_message = None
     attempts_key = f"verify_attempts_{user_data.get('email', 'unknown')}"
 
     if request.method == "POST":
-        if form.is_valid():
-            cache.add(attempts_key, 0, 300)
+        try:
             attempts = cache.incr(attempts_key)
+        except ValueError:
+            cache.set(attempts_key, 1, 300)
+            attempts = 1
 
-            if attempts > settings.MAX_VERIFICATION_ATTEMPTS:
-                error_message = "Слишком много неудачных попыток. Запросите новый код."
-                context = {"verification_form": form, "error_message": error_message}
-                return render(request, "main/verify.html", context)
+        if attempts > settings.MAX_VERIFICATION_ATTEMPTS:
+            error_message = "Слишком много неудачных попыток. Запросите новый код."
+            return render(request, "main/verify.html", {
+                "verification_form": VerificationForm(request.POST),
+                "error_message": error_message,
+            })
 
-            input_code = form.cleaned_data["code"]
+    elif request.method == "GET":
+        if cache.get(attempts_key, 0) > settings.MAX_VERIFICATION_ATTEMPTS:
+            error_message = "Слишком много неудачных попыток. Запросите новый код."
+            return render(request, "main/verify.html", {
+                "verification_form": VerificationForm(),
+                "error_message": error_message,
+            })
 
-            try:
-                with transaction.atomic():
-                    verification = VerificationCode.objects.select_for_update().filter(
-                        email=user_data["email"],
-                        purpose="register",
-                        is_used=False,
-                        expires_at__gt=timezone.now(),
-                    ).first()
+    form = VerificationForm(request.POST or None)
+    error_message = None
 
-                    if verification and verification.check_code(input_code):
-                        verification.is_used = True
-                        verification.save(update_fields=["is_used"])
-                        cache.delete(attempts_key)
+    if request.method == "POST" and form.is_valid():
+        input_code = form.cleaned_data["code"]
 
-                        if request.headers.get("HX-Request"):
-                            response = HttpResponse()
-                            response["HX-Redirect"] = redirect("main:verify_phone_page").url
-                            return response
-                        return redirect("main:verify_phone_page")
+        try:
+            with transaction.atomic():
+                verification = VerificationCode.objects.select_for_update().filter(
+                    email=user_data["email"],
+                    purpose="register",
+                    is_used=False,
+                    expires_at__gt=timezone.now(),
+                ).first()
 
+                if verification and verification.check_code(input_code):
+                    verification.is_used = True
+                    verification.save(update_fields=["is_used"])
+
+                    cache.delete(attempts_key)
+
+                    user_data["email_verified"] = True
+                    request.session["verification_data"] = user_data
+                    request.session.modified = True
+
+                    if request.headers.get("HX-Request"):
+                        response = HttpResponse()
+                        response["HX-Redirect"] = redirect("main:verify_phone_page").url
+                        return response
+                    return redirect("main:verify_phone_page")
+
+                else:
+
+                    current_attempts = cache.get(attempts_key, 0)
+                    if current_attempts > settings.MAX_VERIFICATION_ATTEMPTS:
+                        error_message = "Слишком много неудачных попыток. Запросите новый код."
                     else:
                         error_message = "Неверный или истекший код."
-                        context = {"verification_form": form, "error_message": error_message}
-                        return render(request, "main/verify.html", context)
+                    
+                    context = {"verification_form": form, "error_message": error_message}
+                    return render(request, "main/verify.html", context)
 
-            except Exception as e:
-                logger.error("Ошибка верификации: %s", e)
-                error_message = "Ошибка сервера. Попробуйте снова."
-                context = {"verification_form": form, "error_message": error_message}
-                return render(request, "main/verify.html", context)
+        except Exception as e:
+            logger.error("Ошибка верификации: %s", e)
+            error_message = "Ошибка сервера. Попробуйте снова."
+            context = {"verification_form": form, "error_message": error_message}
+            return render(request, "main/verify.html", context)
 
     context = {
         "verification_form": form,
         "error_message": error_message,
     }
     return render(request, "main/verify.html", context)
-
 
 @require_POST
 def resend_verification_code(request):

@@ -17,9 +17,6 @@ def notifications(request):
 
     current_filter = request.GET.get('filter', 'all')
 
-    previous_app = get_previous_app(request)
-    base_template = 'shop/base.html' if previous_app == 'shop' else 'main/base.html'
-
     if current_filter == 'unread':
         notifications_queryset = notifications_queryset.filter(is_read=False)
     elif current_filter == 'read':
@@ -30,7 +27,6 @@ def notifications(request):
     context = {
         'notifications': notifications_list,
         'current_filter': current_filter,
-        'base_template': base_template,
     }
     return render(request, 'main/notifications.html', context)
 

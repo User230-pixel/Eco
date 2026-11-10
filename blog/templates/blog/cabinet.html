@@ -1,0 +1,92 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Личный кабинет — Eco Blog{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-10">
+
+    <h1 class="text-3xl md:text-4xl font-black tracking-tighter uppercase mb-8 text-gray-900 dark:text-white">
+        <i class="fas fa-user-circle text-gray-900 dark:text-volt"></i> Личный кабинет
+    </h1>
+
+    {# ===== ПРОФИЛЬ ===== #}
+    <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-6 mb-6">
+        <div class="flex items-start gap-5 flex-wrap sm:flex-nowrap">
+
+            <div class="w-20 h-20 bg-volt text-black flex items-center justify-center font-black text-3xl shrink-0">
+                {{ user_obj.username|first|upper }}
+            </div>
+
+            <div class="flex-1 min-w-0">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                    {% if user_obj.first_name or user_obj.last_name %}
+                        {{ user_obj.first_name }} {{ user_obj.last_name }}
+                    {% else %}
+                        {{ user_obj.username }}
+                    {% endif %}
+                </h2>
+                <p class="text-xs font-mono text-gray-500 dark:text-gray-400">@{{ user_obj.username }}</p>
+                {% if user_obj.email %}
+                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                        <i class="fas fa-envelope mr-1"></i> {{ user_obj.email }}
+                    </p>
+                {% endif %}
+                {% if profile.bio %}
+                    <p class="mt-3 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ profile.bio }}</p>
+                {% endif %}
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <a href="{% url 'blog:cabinet_edit' %}"
+                   class="px-4 py-2 bg-volt text-black text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+                    <i class="fas fa-pen"></i> Изменить
+                </a>
+                <a href="{% url 'blog:profile' user_obj.pk %}"
+                   class="px-4 py-2 border border-gray-300 dark:border-edge text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                    <i class="fas fa-eye"></i> Профиль
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {# ===== СТАТИСТИКА ===== #}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-4">
+            <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Всего</p>
+            <p class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ stats.posts_total }}</p>
+        </div>
+        <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-4">
+            <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Опубликовано</p>
+            <p class="text-2xl font-black text-green-600 dark:text-green-400 mt-1">{{ stats.posts_published }}</p>
+        </div>
+        <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-4">
+            <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Черновики</p>
+            <p class="text-2xl font-black text-yellow-600 dark:text-yellow-400 mt-1">{{ stats.posts_drafts }}</p>
+        </div>
+        <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-4">
+            <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400">Комментариев</p>
+            <p class="text-2xl font-black text-gray-900 dark:text-white mt-1">{{ stats.comments_total }}</p>
+        </div>
+    </div>
+
+    {# ===== ССЫЛКИ ===== #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <a href="{% url 'blog:my_posts' %}" class="flex items-center gap-4 bg-white dark:bg-panel border border-gray-200 dark:border-edge p-5 hover:border-black dark:hover:border-volt">
+            <i class="fas fa-newspaper text-2xl text-gray-900 dark:text-volt"></i>
+            <div>
+                <p class="font-bold text-gray-900 dark:text-white">Мои посты</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Редактировать, удалять</p>
+            </div>
+        </a>
+        <a href="{% url 'blog:add_post' %}" class="flex items-center gap-4 bg-white dark:bg-panel border border-gray-200 dark:border-edge p-5 hover:border-black dark:hover:border-volt">
+            <i class="fas fa-plus-circle text-2xl text-gray-900 dark:text-volt"></i>
+            <div>
+                <p class="font-bold text-gray-900 dark:text-white">Новый пост</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Создать запись</p>
+            </div>
+        </a>
+    </div>
+
+</div>
+{% endblock %}

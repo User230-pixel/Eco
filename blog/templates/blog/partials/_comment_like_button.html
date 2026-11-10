@@ -1,0 +1,9 @@
+<button hx-post="{% url 'blog:comment_like_toggle' comment.id %}"
+        hx-target="this"
+        hx-swap="outerHTML"
+        class="flex items-center gap-1.5 text-xs font-mono transition-colors
+               {% if comment.id in liked_comment_ids %}text-red-500
+               {% else %}text-gray-500 dark:text-gray-400 hover:text-red-500{% endif %}">
+    <i class="{% if comment.id in liked_comment_ids %}fas{% else %}far{% endif %} fa-heart"></i>
+    <span>{{ comment.likes.count }}</span>
+</button>

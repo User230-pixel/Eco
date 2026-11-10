@@ -120,6 +120,8 @@ def add_to_cart(request, id, slug):
 @rate_limit('checkout', 35, 300)
 def checkout(request):
     order = None
+
+    # ========== 1. СОЗДАНИЕ ЗАКАЗА + РЕЗЕРВ ==========
     try:
         with transaction.atomic():
             cart = Cart.objects.select_for_update().get(user=request.user)
@@ -162,36 +164,64 @@ def checkout(request):
                 order.save(update_fields=["total_price"])
 
             reserve_order_stock(order)
+
     except InsufficientStock as e:
         messages.error(request, str(e))
         return redirect('shop:cart_detail')
     except Exception as e:
-        logger.error("Ошибка создания заказа для user=%s: %s", request.user.id, e, exc_info=True)
+        logger.error(
+            "Ошибка создания заказа для user=%s: %s",
+            request.user.id, e, exc_info=True,
+        )
         messages.error(request, "Ошибка оформления заказа. Обратитесь в поддержку.")
         return redirect('shop:cart_detail')
 
+    # ========== 2. ПРОВЕРКА СУЩЕСТВУЮЩЕГО ПЛАТЕЖА ==========
     if order.yookassa_payment_id:
         try:
             payment = YookassaPayment.find_one(order.yookassa_payment_id)
         except Exception as e:
             logger.error(
                 "Ошибка получения платежа %s для order=%s: %s",
-                order.yookassa_payment_id,
-                order.id,
-                e,
-                exc_info=True,
+                order.yookassa_payment_id, order.id, e, exc_info=True,
             )
             messages.error(request, "Не удалось проверить платёж. Попробуйте ещё раз позже.")
             return redirect("shop:cart_detail")
 
+        # --- успех ---
         if payment.status == "succeeded":
             request.session["last_payment_id"] = payment.id
             return redirect("shop:payment_success")
+
+        # --- ОТМЕНА ---
         if payment.status == "canceled":
-            cancel_order(order)
-            messages.error(request, "Предыдущий платёж отменён. Повторите оформление заказа.")
+            try:
+                cancelled = cancel_order(order)
+                if cancelled:
+                    logger.info("Заказ %s отменён (платёж canceled)", order.id)
+                else:
+                    logger.warning(
+                        "cancel_order вернул False для order=%s (status=%s)",
+                        order.id, order.status,
+                    )
+            except Exception as e:
+                logger.error(
+                    "Ошибка отмены заказа order=%s: %s",
+                    order.id, e, exc_info=True,
+                )
+                messages.error(
+                    request,
+                    "Не удалось отменить заказ. Обратитесь в поддержку.",
+                )
+                return redirect("shop:cart_detail")
+
+            messages.error(
+                request,
+                "Предыдущий платёж отменён. Повторите оформление заказа.",
+            )
             return redirect("shop:cart_detail")
 
+        # --- платёж в процессе (pending / waiting_for_capture) ---
         confirmation_url = getattr(
             getattr(payment, "confirmation", None),
             "confirmation_url",
@@ -203,6 +233,7 @@ def checkout(request):
         messages.error(request, "Платёж ещё обрабатывается. Попробуйте позже.")
         return redirect("shop:cart_detail")
 
+    # ========== 3. СОЗДАНИЕ НОВОГО ПЛАТЕЖА ==========
     success_url = request.build_absolute_uri(reverse('shop:payment_success'))
     idempotence_key = f"eco-order-{order.pk}"
 
@@ -224,10 +255,7 @@ def checkout(request):
         status_code = getattr(e, "HTTP_CODE", 0)
         logger.error(
             "Ошибка создания платежа в ЮKassa для order=%s (HTTP %s): %s",
-            order.id,
-            status_code,
-            e,
-            exc_info=True,
+            order.id, status_code, e, exc_info=True,
         )
         if 400 <= status_code < 500 and status_code not in (409, 429):
             fail_unpaid_order(order)
@@ -243,7 +271,10 @@ def checkout(request):
             )
         return redirect("shop:cart_detail")
     except Exception as e:
-        logger.error("Ошибка создания платежа в ЮKassa для order=%s: %s", order.id, e, exc_info=True)
+        logger.error(
+            "Ошибка создания платежа в ЮKassa для order=%s: %s",
+            order.id, e, exc_info=True,
+        )
         messages.error(
             request,
             "Не удалось подтвердить создание платежа. Повторите оформление: "

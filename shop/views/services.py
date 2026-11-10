@@ -6,7 +6,11 @@ from django.db import transaction
 from django.db.models import F
 
 from shop.models import CartItem, Order, Product
-from main.models import Profile
+from main.models import Profile, CustomUser
+
+from main.views.views import send_notifications
+from django.db.models import Q
+from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +134,14 @@ def cancel_order(order) -> bool:
         return True
 
 
-def send_order_paid_email(order):
+def send_order_paid_email(order, request=None):
+    all_admins_or_drivers = CustomUser.objects.filter(
+        Q(role_driver=True) | 
+        Q(role_moderator=True) | 
+        Q(role_admin=True) | 
+        Q(is_superuser=True)
+    ).distinct()
+
     items_text = "".join(
         f"• {item.product.name} — {item.quantity} шт. | {item.price} руб.\n"
         for item in order.items.select_related("product")
@@ -158,3 +169,12 @@ def send_order_paid_email(order):
         recipient_list=recipients,
         fail_silently=False,
     )
+    
+    for staff_user in all_admins_or_drivers:
+        send_notifications(
+            user=staff_user,
+            title=f"Алишоп: Оплачен заказ №{order.id}",
+            message=message,
+            notification_type="success",
+            url=f"{reverse("main:driver_orders")}"
+        )

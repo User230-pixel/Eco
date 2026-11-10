@@ -1,0 +1,117 @@
+{% extends base_template %}
+{% load static %}
+
+{% block title %}Мои посты — Eco Blog{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <div class="flex items-end justify-between gap-4 mb-6 flex-wrap">
+        <div>
+            <a href="{% url 'blog:cabinet' %}"
+               class="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-volt mb-2">
+                <i class="fas fa-arrow-left"></i> В кабинет
+            </a>
+            <h1 class="text-2xl md:text-3xl font-black tracking-tighter uppercase text-gray-900 dark:text-white">
+                <i class="fas fa-newspaper text-gray-900 dark:text-volt"></i> Мои посты
+            </h1>
+        </div>
+        <a href="{% url 'blog:add_post' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black">
+            <i class="fas fa-plus"></i> Новый
+        </a>
+    </div>
+
+    {# Фильтры #}
+    <div class="flex gap-2 mb-6 flex-wrap">
+        <a href="?status=all"
+           class="px-3 py-1.5 text-xs font-mono uppercase tracking-widest border
+                  {% if status == 'all' %}border-volt text-gray-900 dark:text-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}">
+            Все
+        </a>
+        <a href="?status=published"
+           class="px-3 py-1.5 text-xs font-mono uppercase tracking-widest border
+                  {% if status == 'published' %}border-volt text-gray-900 dark:text-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}">
+            Опубликованные
+        </a>
+        <a href="?status=drafts"
+           class="px-3 py-1.5 text-xs font-mono uppercase tracking-widest border
+                  {% if status == 'drafts' %}border-volt text-gray-900 dark:text-volt{% else %}border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt{% endif %}">
+            Черновики
+        </a>
+    </div>
+
+    {# Список #}
+    <div class="space-y-3">
+        {% for post in posts %}
+            <div class="bg-white dark:bg-panel border border-gray-200 dark:border-edge p-4 flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1 flex-wrap">
+                        {% if post.is_published %}
+                            <span class="text-[10px] font-mono uppercase px-2 py-0.5 bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400">
+                                Опубликован
+                            </span>
+                        {% else %}
+                            <span class="text-[10px] font-mono uppercase px-2 py-0.5 bg-yellow-100 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-400">
+                                Черновик
+                            </span>
+                        {% endif %}
+                        <span class="text-[10px] font-mono text-gray-500 dark:text-gray-400">
+                            {{ post.created_at|date:"d.m.Y" }}
+                        </span>
+                        {% if post.category %}
+                            <span class="text-[10px] font-mono text-gray-500 dark:text-gray-400">
+                                · {{ post.category.name }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <a href="{{ post.get_absolute_url }}"
+                       class="text-lg font-semibold text-gray-900 dark:text-white hover:text-black dark:hover:text-volt">
+                        {{ post.title }}
+                    </a>
+
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        {{ post.text|truncatewords:20 }}
+                    </p>
+                </div>
+
+                <div class="flex gap-2 shrink-0">
+                    <a href="{% url 'blog:detail' post.slug %}"
+                       class="w-8 h-8 flex items-center justify-center border border-gray-300 dark:border-edge text-gray-600 dark:text-gray-400 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt"
+                       title="Открыть">
+                        <i class="fas fa-eye text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-12 bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge">
+                <i class="fas fa-newspaper text-4xl text-gray-400 dark:text-gray-500 mb-3"></i>
+                <p class="text-sm text-gray-500 dark:text-gray-400">Постов пока нет.</p>
+                <a href="{% url 'blog:add_post' %}"
+                   class="inline-block mt-4 px-4 py-2 bg-volt text-black text-sm font-bold hover:bg-black hover:text-white">
+                    Создать первый
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+
+    {# Пагинация #}
+    {% if posts.paginator.num_pages > 1 %}
+    <nav class="flex items-center justify-center gap-2 mt-8 font-mono text-sm">
+        {% if posts.has_previous %}
+            <a href="?page={{ posts.previous_page_number }}&status={{ status }}"
+               class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">←</a>
+        {% endif %}
+        <span class="px-3 py-2 text-gray-500 dark:text-gray-400">
+            {{ posts.number }} / {{ posts.paginator.num_pages }}
+        </span>
+        {% if posts.has_next %}
+            <a href="?page={{ posts.next_page_number }}&status={{ status }}"
+               class="px-3 py-2 border border-gray-300 dark:border-edge hover:border-black dark:hover:border-volt">→</a>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

@@ -68,14 +68,14 @@
                 </h3>
 
                 <div class="space-y-3">
-                    <a href="{% url 'shop:profile' %}"
+                    <a href="{% url 'shop:cabinet' %}"
                        class="flex items-center gap-3 px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
                         <i class="fas fa-store w-4 text-center"></i>
                         <span>Личный кабинет в магазине</span>
                         <i class="fas fa-arrow-right ml-auto text-xs opacity-50"></i>
                     </a>
 
-                    <a href="/blog/"
+                    <a href="{% url 'blog:cabinet' %}"
                        class="flex items-center gap-3 px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
                         <i class="fas fa-newspaper w-4 text-center"></i>
                         <span>Личный кабинет в блоге</span>
@@ -138,7 +138,13 @@
                 </a>
             </div>
         </div>
-
+        <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+            <a href="{% url 'main:profile' user.pk %}"
+            class="flex items-center gap-3 px-4 py-3 border border-gray-300 dark:border-edge text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-black hover:text-black dark:hover:border-volt dark:hover:text-volt">
+                <i class="fas fa-eye w-4 text-center"></i>
+                <span>Публичный профиль</span>
+                <i class="fas fa-arrow-right ml-auto text-xs opacity-50"></i>
+            </a>
         </div>
     </div>
 </form>

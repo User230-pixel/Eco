@@ -1,4 +1,4 @@
-{% extends 'main/base.html' %}
+{% extends base_template %}
 
 {% block title %}Настройки | AliEco{% endblock %}
 
@@ -29,6 +29,20 @@
                     data-active="false">
                 <i class="fas fa-user w-4 text-center"></i>
                 Профиль
+            </button>
+
+            <button type="button"
+                    class="settings-tab-btn w-full text-left px-4 py-3 text-sm font-medium border border-transparent flex items-center gap-3
+                           text-gray-700 dark:text-gray-300
+                           hover:border-black dark:hover:border-volt hover:text-black dark:hover:text-volt
+                           data-[active=true]:border-volt
+                           data-[active=true]:font-bold
+                           data-[active=true]:text-black
+                           dark:data-[active=true]:text-volt"
+                    data-tab="visibility"
+                    data-active="false">
+                <i class="fas fa-eye w-4 text-center"></i>
+                Видимость
             </button>
 
             <button type="button"
@@ -106,7 +120,197 @@
                 </div>
             </div>
 
-            <!-- ============================ ВКЛАДКА 2: БЕЗОПАСНОСТЬ ============================ -->
+            <!-- ============================ ВКЛАДКА 2: ВИДИМОСТЬ ============================ -->
+            <div class="settings-tab-panel hidden" data-panel="visibility">
+
+                {# Кто видит профиль #}
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6 mb-4">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-eye text-gray-900 dark:text-volt"></i> Кто видит профиль
+                    </h4>
+                    <div>
+                        <label class="block text-[10px] font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-1.5">
+                            Профиль целиком
+                        </label>
+                        <select>
+                            <option value="everyone" selected>Все пользователи</option>
+                            <option value="auth">Только авторизованные</option>
+                            <option value="subscribers">Только подписчики</option>
+                            <option value="nobody">Только я</option>
+                        </select>
+                    </div>
+                </div>
+
+                {# Что видно в профиле #}
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6 mb-4">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-list text-gray-900 dark:text-volt"></i> Что видно в профиле
+                    </h4>
+
+                    <div class="space-y-4">
+
+                        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Биография</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Блок «О себе»</div>
+                            </div>
+                            <select class="w-48">
+                                <option value="everyone" selected>Все</option>
+                                <option value="auth">Авторизованные</option>
+                                <option value="subscribers">Подписчики</option>
+                                <option value="nobody">Только я</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Email</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Контактная почта</div>
+                            </div>
+                            <select class="w-48">
+                                <option value="everyone">Все</option>
+                                <option value="auth">Авторизованные</option>
+                                <option value="subscribers" selected>Подписчики</option>
+                                <option value="nobody">Только я</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Посты</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Список опубликованных постов</div>
+                            </div>
+                            <select class="w-48">
+                                <option value="everyone" selected>Все</option>
+                                <option value="auth">Авторизованные</option>
+                                <option value="subscribers">Подписчики</option>
+                                <option value="nobody">Только я</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Комментарии</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">История комментариев</div>
+                            </div>
+                            <select class="w-48">
+                                <option value="everyone">Все</option>
+                                <option value="auth" selected>Авторизованные</option>
+                                <option value="subscribers">Подписчики</option>
+                                <option value="nobody">Только я</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Лайки</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Счётчик лайков профиля</div>
+                            </div>
+                            <select class="w-48">
+                                <option value="everyone" selected>Все</option>
+                                <option value="auth">Авторизованные</option>
+                                <option value="subscribers">Подписчики</option>
+                                <option value="nobody">Только я</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 pb-4 border-b border-gray-200 dark:border-edge flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Подписчики</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Счётчик подписчиков</div>
+                            </div>
+                            <select class="w-48">
+                                <option value="everyone" selected>Все</option>
+                                <option value="auth">Авторизованные</option>
+                                <option value="subscribers">Подписчики</option>
+                                <option value="nobody">Только я</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4 flex-wrap">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Магазин</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Вкладка «Магазин» в профиле</div>
+                            </div>
+                            <select class="w-48">
+                                <option value="everyone" selected>Все</option>
+                                <option value="auth">Авторизованные</option>
+                                <option value="subscribers">Подписчики</option>
+                                <option value="nobody">Только я</option>
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                {# Взаимодействия #}
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6 mb-4">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-user-shield text-gray-900 dark:text-volt"></i> Взаимодействия
+                    </h4>
+
+                    <div class="space-y-4">
+                        <label class="flex items-start gap-3 cursor-pointer pb-4 border-b border-gray-200 dark:border-edge">
+                            <input type="checkbox" checked class="w-4 h-4 mt-0.5">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Разрешить лайки</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Другие могут лайкать ваш профиль</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer pb-4 border-b border-gray-200 dark:border-edge">
+                            <input type="checkbox" checked class="w-4 h-4 mt-0.5">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Разрешить подписки</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Другие могут подписаться на вас</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer pb-4 border-b border-gray-200 dark:border-edge">
+                            <input type="checkbox" class="w-4 h-4 mt-0.5">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Разрешить комментарии</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Другие могут комментировать ваши посты</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 mt-0.5">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Приватный профиль</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Новые подписчики требуют одобрения</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {# Поиск #}
+                <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
+                    <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
+                        <i class="fas fa-search text-gray-900 dark:text-volt"></i> Видимость в поиске
+                    </h4>
+
+                    <div class="space-y-4">
+                        <label class="flex items-start gap-3 cursor-pointer pb-4 border-b border-gray-200 dark:border-edge">
+                            <input type="checkbox" checked class="w-4 h-4 mt-0.5">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Показывать в поиске</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Профиль появляется в результатах поиска</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" class="w-4 h-4 mt-0.5">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Индексировать в Google</div>
+                                <div class="text-xs font-mono text-gray-500 dark:text-gray-400 mt-0.5">Поисковики могут индексировать профиль</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================ ВКЛАДКА 3: БЕЗОПАСНОСТЬ ============================ -->
             <div class="settings-tab-panel hidden" data-panel="security">
                 <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
                     <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
@@ -173,7 +377,7 @@
                 </div>
             </div>
 
-            <!-- ============================ ВКЛАДКА 3: УВЕДОМЛЕНИЯ ============================ -->
+            <!-- ============================ ВКЛАДКА 4: УВЕДОМЛЕНИЯ ============================ -->
             <div class="settings-tab-panel hidden" data-panel="notifications">
                 <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
                     <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
@@ -204,7 +408,7 @@
                 </div>
             </div>
 
-            <!-- ============================ ВКЛАДКА 4: ВНЕШНИЙ ВИД ============================ -->
+            <!-- ============================ ВКЛАДКА 5: ВНЕШНИЙ ВИД ============================ -->
             <div class="settings-tab-panel hidden" data-panel="appearance">
                 <div class="bg-gray-50 dark:bg-panel border border-gray-200 dark:border-edge p-6">
                     <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-gray-900 dark:text-white">
@@ -246,7 +450,7 @@
                 </div>
             </div>
 
-            <!-- ============================ ВКЛАДКА 5: ОПАСНАЯ ЗОНА ============================ -->
+            <!-- ============================ ВКЛАДКА 6: ОПАСНАЯ ЗОНА ============================ -->
             <div class="settings-tab-panel hidden" data-panel="danger">
                 <div class="bg-gray-50 dark:bg-panel border border-red-500/40 p-6">
                     <h4 class="text-lg font-black tracking-tight flex items-center gap-2 mb-5 text-red-600 dark:text-red-400">

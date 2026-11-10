@@ -1,0 +1,67 @@
+{% extends 'blog/base.html' %}
+{% load static %}
+
+{% block title %}Все посты — Eco Blog{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-10">
+
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Все посты</h1>
+        <p class="text-xs font-mono uppercase tracking-widest text-gray-500 dark:text-gray-400 mt-1">
+            Страница {{ posts.number }} из {{ posts.paginator.num_pages }}
+            · всего {{ posts.paginator.count }} постов
+        </p>
+    </div>
+
+    {# ===== СПИСОК ПОСТОВ (партиал) ===== #}
+    {% include 'blog/partials/_post_list.html' with empty_message="Пока нет постов." %}
+
+    {# ===== ПАГИНАЦИЯ ===== #}
+    {% if posts.paginator.num_pages > 1 %}
+    <nav class="flex items-center justify-center gap-2 mt-10 font-mono text-sm">
+
+        {# ← Назад #}
+        {% if posts.has_previous %}
+            <a href="?page={{ posts.previous_page_number }}"
+               class="px-3 py-2 border border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                ←
+            </a>
+        {% else %}
+            <span class="px-3 py-2 border border-gray-200 dark:border-edge/50 text-gray-400 dark:text-gray-600 cursor-not-allowed">←</span>
+        {% endif %}
+
+        {# Номера страниц #}
+        {% for num in posts.paginator.page_range %}
+            {% if num == posts.number %}
+                <span class="px-3 py-2 bg-volt text-black font-bold">{{ num }}</span>
+            {% elif num > posts.number|add:"-3" and num < posts.number|add:"3" %}
+                <a href="?page={{ num }}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                    {{ num }}
+                </a>
+            {% elif num == 1 or num == posts.paginator.num_pages %}
+                <a href="?page={{ num }}"
+                   class="px-3 py-2 border border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                    {{ num }}
+                </a>
+            {% elif num == posts.number|add:"-3" or num == posts.number|add:"3" %}
+                <span class="px-2 text-gray-500 dark:text-gray-400">…</span>
+            {% endif %}
+        {% endfor %}
+
+        {# Вперёд → #}
+        {% if posts.has_next %}
+            <a href="?page={{ posts.next_page_number }}"
+               class="px-3 py-2 border border-gray-300 dark:border-edge text-gray-700 dark:text-gray-300 hover:border-black dark:hover:border-volt">
+                →
+            </a>
+        {% else %}
+            <span class="px-3 py-2 border border-gray-200 dark:border-edge/50 text-gray-400 dark:text-gray-600 cursor-not-allowed">→</span>
+        {% endif %}
+
+    </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

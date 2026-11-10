@@ -29,6 +29,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("main.urls", namespace="main")),
     path("shop/", include("shop.urls", namespace="shop")),
+    path("blog/", include("blog.urls", namespace="blog")),
     path("settings_app/", include("settings_app.urls", namespace="settings_app")),
 ]
 

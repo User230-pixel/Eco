@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "phone_verify",
     "shop.apps.ShopConfig",
     "main.apps.MainConfig",
+    "blog.apps.BlogConfig",
     "settings_app.apps.SettingsAppConfig",
 ]
 
@@ -76,6 +77,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "main.views.context_processors.unread_notifications_processor",
+                'main.views.context_processors.base_template',
             ],
         },
     },

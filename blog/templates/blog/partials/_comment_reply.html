@@ -1,0 +1,43 @@
+<div id="comment-{{ reply.id }}"
+     class="bg-gray-50 dark:bg-void border border-gray-200 dark:border-edge p-3">
+
+    <div class="flex items-start gap-2">
+
+        <div class="w-8 h-8 shrink-0 bg-gray-200 dark:bg-edge text-gray-700 dark:text-gray-300 flex items-center justify-center font-bold text-sm">
+            {{ reply.user.username|first|upper }}
+        </div>
+
+        <div class="flex-1 min-w-0">
+
+            <div class="flex items-center justify-between gap-2">
+                <div>
+                    <span class="font-bold text-xs text-gray-900 dark:text-white">
+                        {{ reply.user.username }}
+                    </span>
+                    <span class="text-[10px] font-mono text-gray-500 dark:text-gray-400 ml-2">
+                        {{ reply.created_at|date:"d.m.Y H:i" }}
+                    </span>
+                </div>
+
+                {% if reply.user_id == request.user.id or request.user.is_staff %}
+                    <button hx-post="{% url 'blog:comment_delete' reply.id %}"
+                            hx-target="#comment-{{ reply.id }}"
+                            hx-swap="outerHTML"
+                            hx-confirm="Удалить ответ?"
+                            class="text-gray-400 hover:text-red-500 shrink-0">
+                        <i class="fas fa-trash text-[10px]"></i>
+                    </button>
+                {% endif %}
+            </div>
+
+            <div class="mt-1 text-sm text-gray-800 dark:text-gray-200">
+                {{ reply.text|linebreaks }}
+            </div>
+
+            <div class="mt-2">
+                {% include 'blog/partials/_comment_like_button.html' with comment=reply %}
+            </div>
+
+        </div>
+    </div>
+</div>
